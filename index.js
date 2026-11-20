@@ -16,6 +16,10 @@ const routes = {
 /** dsh 插件入口。 */
 export const inject = ['tools', 'webServer', 'connection']
 
+// dsh-tools 只在 dsh 宿主内可解析(TLA 动态导入);独立运行时跳过工具注册
+let defineTool
+try { ({ defineTool } = await import('@deepseek-ai/dsh-tools')) } catch { /* standalone */ }
+
 export function apply(ctx) {
   ctx.effect(() => ctx.webServer.register({
     kind: 'prefix',
@@ -58,8 +62,6 @@ export function apply(ctx) {
   }), 'workbench-template: /wbt-api routes')
 
   // agent 工具:让对话里也能盖章项目
-  let defineTool
-  try { ({ defineTool } = await import('@deepseek-ai/dsh-tools')) } catch { /* standalone */ }
   if (defineTool) {
     const tool = defineTool({
       name: 'wbt_scaffold',
