@@ -1,0 +1,4 @@
+# 通用工作台骨架 — 一个插件行同时承载 Host 半区(index.js)与 Client 半区(dsh.client 声明)
+- insert:
+    - id: my-workbench
+      name: dsh-myworkbench

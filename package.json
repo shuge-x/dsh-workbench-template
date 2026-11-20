@@ -1,0 +1,50 @@
+{
+  "name": "dsh-workbench-template",
+  "version": "0.1.0",
+  "description": "dsh 工作台标准模板与生成器——装一次,输入路径,得到一个符合规范、AI 可接手、可直接运行的工作台项目",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "service",
+    "skeleton"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "engines": {
+    "dsh": ">=0.2.0 <0.3"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "guard": "node scripts/guard.mjs",
+    "smoke": "node scripts/smoke-render.mjs",
+    "prepack": "npm run guard && npm run smoke && node build.mjs"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "esbuild": "^0.25.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.6.0"
+  }
+}
