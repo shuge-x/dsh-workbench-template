@@ -205,7 +205,7 @@ export function ScaffoldPage(): ReactNode {
             </button>
           </div>
 
-          {found !== null && (
+          {found !== null && uninstallOutcomes === null && (
             <div style={{ marginTop: 12 }}>
               {found.length === 0
                 ? <div style={{ fontSize: 12.5, color: 'var(--tll-ink2)' }}>所有 profile 里都没有该路径的登记——无需卸载。</div>
@@ -223,8 +223,23 @@ export function ScaffoldPage(): ReactNode {
                           </label>
                         ))}
                       </div>
+                      {selected.length > 0 && (
+                        <div style={{ background: 'var(--tll-card2)', border: '1px solid var(--tll-line)', borderRadius: 10, padding: '10px 14px', marginBottom: 12 }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 650, marginBottom: 6 }}>执行后将涉及以下内容(先看清楚,再确认):</div>
+                          <div style={{ fontSize: 12, lineHeight: 1.9, color: 'var(--tll-ink2)' }}>
+                            {selected.map(profile => (
+                              <div key={profile} style={{ marginBottom: 6 }}>
+                                <div><b style={{ color: 'var(--tll-ink)' }}>~/.dsh/profiles/{profile}/package.json</b> — 移除 dependencies 登记与 bundles 条目</div>
+                                <div><b style={{ color: 'var(--tll-ink)' }}>~/.dsh/profiles/{profile}/node_modules/</b> — 移除对应符号链接</div>
+                              </div>
+                            ))}
+                            <div>✓ 不变:项目目录本身(代码与数据全部保留,是否删除由你决定)</div>
+                            <div>✓ 生效方式:该 profile 的实例重启后面板消失;浏览器刷新即可看到</div>
+                          </div>
+                        </div>
+                      )}
                       <button className="tll-ai-btn" style={{ opacity: uninstallBusy || selected.length === 0 ? 0.55 : 1 }} onClick={uninstallSelected}>
-                        {uninstallBusy ? '卸载中…' : `卸载选中的 ${selected.length} 条`}
+                        {uninstallBusy ? '卸载中…' : `确认卸载选中的 ${selected.length} 条`}
                       </button>
                     </>
                   )}

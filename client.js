@@ -710,7 +710,7 @@ function ScaffoldPage() {
           ),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "tll-ai-btn", style: { opacity: scanBusy || uninstallPath.trim() === "" ? 0.55 : 1 }, onClick: scan, children: scanBusy ? "\u626B\u63CF\u4E2D\u2026" : "\u626B\u63CF" })
         ] }),
-        found !== null && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { marginTop: 12 }, children: found.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u6240\u6709 profile \u91CC\u90FD\u6CA1\u6709\u8BE5\u8DEF\u5F84\u7684\u767B\u8BB0\u2014\u2014\u65E0\u9700\u5378\u8F7D\u3002" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+        found !== null && uninstallOutcomes === null && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { marginTop: 12 }, children: found.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u6240\u6709 profile \u91CC\u90FD\u6CA1\u6709\u8BE5\u8DEF\u5F84\u7684\u767B\u8BB0\u2014\u2014\u65E0\u9700\u5378\u8F7D\u3002" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)", marginBottom: 6 }, children: [
             "\u627E\u5230 ",
             found.length,
@@ -734,7 +734,32 @@ function ScaffoldPage() {
             ] }),
             r.stale && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "tll-pill", style: { color: "var(--tll-down)", background: "rgba(192,57,43,.1)" }, children: "\u5931\u6548(\u76EE\u5F55\u5DF2\u4E0D\u5B58\u5728)" })
           ] }, r.profile)) }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "tll-ai-btn", style: { opacity: uninstallBusy || selected.length === 0 ? 0.55 : 1 }, onClick: uninstallSelected, children: uninstallBusy ? "\u5378\u8F7D\u4E2D\u2026" : `\u5378\u8F7D\u9009\u4E2D\u7684 ${selected.length} \u6761` })
+          selected.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { background: "var(--tll-card2)", border: "1px solid var(--tll-line)", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 12.5, fontWeight: 650, marginBottom: 6 }, children: "\u6267\u884C\u540E\u5C06\u6D89\u53CA\u4EE5\u4E0B\u5185\u5BB9(\u5148\u770B\u6E05\u695A,\u518D\u786E\u8BA4):" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { fontSize: 12, lineHeight: 1.9, color: "var(--tll-ink2)" }, children: [
+              selected.map((profile) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginBottom: 6 }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("b", { style: { color: "var(--tll-ink)" }, children: [
+                    "~/.dsh/profiles/",
+                    profile,
+                    "/package.json"
+                  ] }),
+                  " \u2014 \u79FB\u9664 dependencies \u767B\u8BB0\u4E0E bundles \u6761\u76EE"
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("b", { style: { color: "var(--tll-ink)" }, children: [
+                    "~/.dsh/profiles/",
+                    profile,
+                    "/node_modules/"
+                  ] }),
+                  " \u2014 \u79FB\u9664\u5BF9\u5E94\u7B26\u53F7\u94FE\u63A5"
+                ] })
+              ] }, profile)),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { children: "\u2713 \u4E0D\u53D8:\u9879\u76EE\u76EE\u5F55\u672C\u8EAB(\u4EE3\u7801\u4E0E\u6570\u636E\u5168\u90E8\u4FDD\u7559,\u662F\u5426\u5220\u9664\u7531\u4F60\u51B3\u5B9A)" }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { children: "\u2713 \u751F\u6548\u65B9\u5F0F:\u8BE5 profile \u7684\u5B9E\u4F8B\u91CD\u542F\u540E\u9762\u677F\u6D88\u5931;\u6D4F\u89C8\u5668\u5237\u65B0\u5373\u53EF\u770B\u5230" })
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "tll-ai-btn", style: { opacity: uninstallBusy || selected.length === 0 ? 0.55 : 1 }, onClick: uninstallSelected, children: uninstallBusy ? "\u5378\u8F7D\u4E2D\u2026" : `\u786E\u8BA4\u5378\u8F7D\u9009\u4E2D\u7684 ${selected.length} \u6761` })
         ] }) }),
         uninstallOutcomes !== null && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { marginTop: 12, fontSize: 12.5, lineHeight: 1.9 }, children: uninstallOutcomes.map((o) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginBottom: 8 }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { style: { color: o.ok ? "var(--tll-up)" : "var(--tll-down)", fontWeight: 600 }, children: [

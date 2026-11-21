@@ -23,6 +23,24 @@ const PROFILES_ROOT = join(homedir(), '.dsh', 'profiles')
 
 const norm = (p) => resolve(p).replace(new RegExp(sep === '\\' ? '\\\\' : sep + '$'), '')
 
+/** 从插件安装位置向上推导当前 profile 目录(兼容 link: 与 pnpm git 两种布局);找不到返回 null。 */
+function findProfileDir() {
+  let dir = PKG_ROOT
+  for (let i = 0; i < 8; i += 1) {
+    const marker = join(dir, 'package.json')
+    if (existsSync(marker)) {
+      try {
+        const p = JSON.parse(readFileSync(marker, 'utf8'))
+        if (p?.dsh?.profile) return dir
+      } catch { /* 继续向上 */ }
+    }
+    const parent = dirname(dir)
+    if (parent === dir) return null
+    dir = parent
+  }
+  return null
+}
+
 /** 扫描全部 profile,返回登记了该路径/目录名的条目列表。 */
 export function scanRegistrations({ path } = {}) {
   const target = norm(String(path ?? ''))
