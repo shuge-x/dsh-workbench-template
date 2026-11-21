@@ -10,6 +10,11 @@
 | `DESIGN.md` | 工作台中性(默认) | 数据/管理类工作台——暖米色画布、松墨文字、蓝色强调 |
 | `DESIGN-terminal.md` | 开发者暗色终端风 | toolbox / 日志 / API 调试——深炭底、等宽、终端绿 |
 | `DESIGN-paper.md` | 纸感编辑器风 | 写作 / 笔记 / 文档审阅——暖纸底、衬线阅读、极简界面 |
+| `DESIGN-drafito.md` | 商店绿(用户珍藏) | 电商/订阅商店——白画布、祖母绿信号色、药丸按钮、会员卡签名组件;含完整暗色主题与响应式全档 |
+
+> **关于 DESIGN-drafito.md**:原文一字未改收录(用户珍藏)。注意它使用**自己的 token 命名**
+> (colors.primary / ink / surface / store-panel…,而非 wb- 的 bg/card/ink-2)——AI 更新 theme.ts 时
+> 按语义映射:bg→bg、ink→ink、primary→accent、line→border、surface→card。语义一一对应,可放心翻译。
 
 ## 换设计(三步,AI 可代办)
 
