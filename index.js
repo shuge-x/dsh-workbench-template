@@ -5,14 +5,22 @@
  * Host 半区仅承载该能力的路由与 agent 工具;数据服务由生成出的项目各自提供。
  */
 import { scaffoldProject } from './service/scaffold.mjs'
-import { uninstallByPath } from './service/uninstall.mjs'
+import { scanRegistrations, uninstallFromProfile } from './service/uninstall.mjs'
 
 const PREFIX = '/wbt-api'
 
 const routes = {
   'GET /health': () => ({ ok: true, service: 'workbench-template', time: new Date().toISOString() }),
   'POST /scaffold': scaffoldProject,
-  'POST /uninstall': uninstallByPath,
+  'POST /uninstall-scan': scanRegistrations,
+  'POST /uninstall': ({ path, profiles }) => {
+    const found = scanRegistrations({ path })
+    const targets = Array.isArray(profiles) && profiles.length > 0
+      ? found.filter(r => profiles.includes(r.profile))
+      : found // 未指定 profiles 时默认卸载全部已扫描到的
+    const results = targets.map(r => ({ profile: r.profile, key: r.key, ...uninstallFromProfile({ profile: r.profile, key: r.key }) }))
+    return { results, scanned: found.length }
+  },
 }
 
 /** dsh 插件入口。 */

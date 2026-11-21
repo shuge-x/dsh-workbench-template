@@ -42,35 +42,51 @@ export function ScaffoldPage(): ReactNode {
   const err = result?.error
   const ok = result?.ok === true
 
-  // 卸载:输入路径 → 两段确认(防误触)→ 调 Host 路由移除 profile 登记
+  // 卸载:输入路径 → 扫描全部 profile 的登记(含失效)→ 选择 → 热移除
+  type Registration = { profile: string; key: string; linkTarget?: string; stale: boolean; hasBundle: boolean }
+  type UninstallOutcome = { profile: string; key: string; ok: boolean; hints?: string[]; error?: string }
   const [uninstallPath, setUninstallPath] = useState('')
+  const [scanBusy, setScanBusy] = useState(false)
+  const [found, setFound] = useState<Registration[] | null>(null)
+  const [selected, setSelected] = useState<string[]>([])
   const [uninstallBusy, setUninstallBusy] = useState(false)
-  const [uninstallArmed, setUninstallArmed] = useState(false)
-  const [uninstallResult, setUninstallResult] = useState<{ hints: string[]; found: boolean; key?: string; removedBundle?: string; error?: string } | null>(null)
-  const doUninstall = (): void => {
-    if (uninstallBusy || uninstallPath.trim() === '') return
-    if (!uninstallArmed) { setUninstallArmed(true); return }
-    setUninstallArmed(false)
-    setUninstallBusy(true)
+  const [uninstallOutcomes, setUninstallOutcomes] = useState<UninstallOutcome[] | null>(null)
+
+  const scan = (): void => {
+    if (scanBusy || uninstallPath.trim() === '') return
+    setScanBusy(true); setFound(null); setUninstallOutcomes(null)
+    void (async () => {
+      try {
+        const res = await fetch(`${BASE}/uninstall-scan`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ path: uninstallPath.trim() }),
+        })
+        if (!res.ok) { setFound([]); return }
+        const data = (await res.json()) as Registration[]
+        setFound(Array.isArray(data) ? data : [])
+      } catch { setFound([]) } finally { setScanBusy(false) }
+    })()
+  }
+
+  const uninstallSelected = (): void => {
+    if (uninstallBusy || selected.length === 0) return
+    setUninstallBusy(true); setUninstallOutcomes(null)
     void (async () => {
       try {
         const res = await fetch(`${BASE}/uninstall`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ path: uninstallPath.trim() }),
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ path: uninstallPath.trim(), profiles: selected }),
         })
         if (res.status === 404) {
-          // 运行中的实例还是旧版服务端(没有卸载路由)——重启实例后重试
-          setUninstallResult({ hints: ['重启 dsh 实例后重试(Ctrl+C 停掉再重新启动)。'], found: false, error: '当前运行的实例是旧版本,缺少卸载接口' })
+          setUninstallOutcomes([{ profile: '—', key: '—', ok: false, error: '当前运行的实例是旧版本,缺少卸载接口——重启实例后重试' }])
           return
         }
-        if (!res.ok) { setUninstallResult({ hints: [], found: false, error: `HTTP ${res.status}` }); return }
-        setUninstallResult(await res.json())
+        if (!res.ok) { setUninstallOutcomes([{ profile: '—', key: '—', ok: false, error: `HTTP ${res.status}` }]); return }
+        setUninstallOutcomes((await res.json()) as UninstallOutcome[])
+        setFound(null)
       } catch {
-        setUninstallResult({ hints: [], found: false, error: '数据服务不可达(实例未启动或网络异常)' })
-      } finally {
-        setUninstallBusy(false)
-      }
+        setUninstallOutcomes([{ profile: '—', key: '—', ok: false, error: '数据服务不可达(实例未启动或网络异常)' }])
+      } finally { setUninstallBusy(false) }
     })()
   }
 
@@ -174,39 +190,62 @@ export function ScaffoldPage(): ReactNode {
         <div className="tll-card" style={{ padding: '16px 20px', marginTop: 16 }}>
           <div style={{ fontSize: 13.5, fontWeight: 650, marginBottom: 4 }}>卸载已生成的项目</div>
           <div style={{ fontSize: 12, color: 'var(--tll-ink3)', marginBottom: 10 }}>
-            输入生成项目的路径,把它从当前 profile 的登记中移除(面板随之消失)。只动登记,不删目录——你的代码与数据保留。
+            输入生成项目的路径,扫描它在所有 profile 里的登记(含项目改名/移动留下的失效登记),按需移除。
+            只动登记,不删目录——你的代码与数据保留。
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 12, alignItems: 'center' }}>
             <span style={{ fontSize: 12.5, color: 'var(--tll-ink2)' }}>项目路径</span>
             <input
               className="tll-search" style={{ width: '100%' }}
               placeholder="/Volumes/NVME980/shuge-harness/dsh-writer-desk"
-              value={uninstallPath} onChange={e => { setUninstallPath(e.target.value); setUninstallResult(null) }}
+              value={uninstallPath} onChange={e => { setUninstallPath(e.target.value); setFound(null); setUninstallOutcomes(null) }}
             />
-            <button
-              className="tll-ai-btn" style={{ opacity: uninstallBusy || uninstallPath.trim() === '' ? 0.55 : 1 }}
-              onClick={doUninstall}
-            >{uninstallBusy ? '卸载中…' : uninstallArmed ? '确认卸载' : '卸载'}</button>
+            <button className="tll-ai-btn" style={{ opacity: scanBusy || uninstallPath.trim() === '' ? 0.55 : 1 }} onClick={scan}>
+              {scanBusy ? '扫描中…' : '扫描'}
+            </button>
           </div>
-          {uninstallResult !== null && (
-            <div style={{ marginTop: 10, fontSize: 12.5, lineHeight: 1.8, color: uninstallResult.error ? 'var(--tll-down)' : 'var(--tll-ink)' }}>
-              {uninstallResult.error
-                ? <>✗ {uninstallResult.error}</>
+
+          {found !== null && (
+            <div style={{ marginTop: 12 }}>
+              {found.length === 0
+                ? <div style={{ fontSize: 12.5, color: 'var(--tll-ink2)' }}>所有 profile 里都没有该路径的登记——无需卸载。</div>
                 : (
                     <>
-                      {uninstallResult.found
-                        ? <div>✓ 已卸载登记:{uninstallResult.key}{uninstallResult.removedBundle ? ' + bundles 条目' : ''}</div>
-                        : <div>该路径未登记在当前 profile 中,无需卸载。</div>}
-                      <div style={{ color: 'var(--tll-ink2)', marginTop: 4 }}>
-                        {uninstallResult.hints.map((h, i) => <div key={i}>{h.startsWith('rm -rf') ? <code style={{ color: 'var(--tll-ink)' }}>{h}</code> : h}</div>)}
+                      <div style={{ fontSize: 12.5, color: 'var(--tll-ink2)', marginBottom: 6 }}>找到 {found.length} 条登记:</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                        {found.map(r => (
+                          <label key={r.profile} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5 }}>
+                            <input type="checkbox" checked={selected.includes(r.profile)}
+                              onChange={e => { setSelected(s => e.target.checked ? [...s, r.profile] : s.filter(x => x !== r.profile)) }} />
+                            <b>{r.profile}</b>
+                            <span style={{ color: 'var(--tll-ink2)' }}>{r.key}{r.linkTarget ? ` → ${r.linkTarget}` : ''}</span>
+                            {r.stale && <span className="tll-pill" style={{ color: 'var(--tll-down)', background: 'rgba(192,57,43,.1)' }}>失效(目录已不存在)</span>}
+                          </label>
+                        ))}
                       </div>
+                      <button className="tll-ai-btn" style={{ opacity: uninstallBusy || selected.length === 0 ? 0.55 : 1 }} onClick={uninstallSelected}>
+                        {uninstallBusy ? '卸载中…' : `卸载选中的 ${selected.length} 条`}
+                      </button>
                     </>
                   )}
             </div>
           )}
+
+          {uninstallOutcomes !== null && (
+            <div style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.9 }}>
+              {uninstallOutcomes.map(o => (
+                <div key={o.profile} style={{ marginBottom: 8 }}>
+                  <span style={{ color: o.ok ? 'var(--tll-up)' : 'var(--tll-down)', fontWeight: 600 }}>
+                    {o.ok ? '✓' : '✗'} {o.profile}
+                  </span>
+                  <span style={{ color: 'var(--tll-ink2)' }}> — {o.error ?? (o.hints ?? []).join(' ')}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      <div style={{ display: 'none' }}><IconCopy size={12} /></div>
+      <div style={{ display: 'none' }}><IconCopy size={12} /></div>      <div style={{ display: 'none' }}><IconCopy size={12} /></div>
     </div>
   )
 }

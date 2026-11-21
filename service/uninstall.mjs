@@ -1,95 +1,97 @@
 /**
- * 卸载服务:把某个「由本生成器创建、已登记进当前 profile」的项目从 profile 中移除。
+ * 卸载服务:跨 profile 扫描与卸载——把某个生成项目的登记从 profile 中移除。
  *
- * 安全边界(刻意为之,见 ScaffoldPage 说明):
+ * 能力:
+ *  - scanRegistrations({ path }):扫描 ~/.dsh/profiles/* 全部 profile,找出登记了该路径
+ *    (link 目标匹配、目录名匹配)或其目录名的条目;link 目标已不存在的标记为「失效」
+ *    (项目改名/移动后会留下失效登记,正是最常见的清理需求)
+ *  - uninstallFromProfile({ profile, key }):从指定 profile 移除一条登记
+ *
+ * 安全边界:
  *  - 只移除 profile 登记(dependencies 条目 + dsh.profile.bundles 条目),不删项目目录
- *  - 拒绝卸载本插件自身
- *  - 输入路径必须能匹配到 profile 里的登记(按 link 目标或目录名),否则明确告知无需卸载
+ *  - 正在运行本插件的当前 profile 里,拒绝移除本插件自身(否则本页面会消失)
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
+import { homedir } from 'node:os'
 import { dirname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const PKG_ROOT = dirname(dirname(fileURLToPath(import.meta.url))) // .../dsh-workbench-template
 const PKG_NAME = JSON.parse(readFileSync(join(PKG_ROOT, 'package.json'), 'utf8')).name
-
-/** 从插件安装位置向上推导 profile 目录(兼容 link: 与 pnpm git 两种安装布局)。 */
-function findProfileDir() {
-  let dir = PKG_ROOT
-  for (let i = 0; i < 8; i += 1) {
-    const marker = join(dir, 'package.json')
-    if (existsSync(marker)) {
-      try {
-        const p = JSON.parse(readFileSync(marker, 'utf8'))
-        if (p?.dsh?.profile) return dir
-      } catch { /* 不是可解析的 package.json,继续向上 */ }
-    }
-    const parent = dirname(dir)
-    if (parent === dir) return null
-    dir = parent
-  }
-  return null
-}
+const PROFILES_ROOT = join(homedir(), '.dsh', 'profiles')
 
 const norm = (p) => resolve(p).replace(new RegExp(sep === '\\' ? '\\\\' : sep + '$'), '')
 
-/**
- * @typedef {object} UninstallResult
- * @property {boolean} found
- * @property {string} [key]
- * @property {string} [removedDependency]
- * @property {string} [removedBundle]
- * @property {string} [profileDir]
- * @property {string[]} hints
- * @property {string} [error]
- */
-/** @returns {Promise<UninstallResult>} */
-
-/** 主入口:按项目路径卸载 profile 登记。 */
-export function uninstallByPath({ path } = {}) {
-  const hints = []
-  const profileDir = findProfileDir()
-  if (profileDir === null) return { found: false, hints, error: '无法定位 profile 目录(本插件可能未通过 profile 安装)' }
-
-  const pkgPath = join(profileDir, 'package.json')
-  const profile = JSON.parse(readFileSync(pkgPath, 'utf8'))
-  const deps = profile.dependencies ?? {}
+/** 扫描全部 profile,返回登记了该路径/目录名的条目列表。 */
+export function scanRegistrations({ path } = {}) {
   const target = norm(String(path ?? ''))
+  const base = (target.split(sep).pop() ?? '').toLowerCase()
+  const out = []
+  if (!existsSync(PROFILES_ROOT) || base === '') return out
+  for (const name of readdirSync(PROFILES_ROOT)) {
+    const dir = join(PROFILES_ROOT, name)
+    const pkgPath = join(dir, 'package.json')
+    if (!existsSync(pkgPath)) continue
+    let p
+    try { p = JSON.parse(readFileSync(pkgPath, 'utf8')) } catch { continue }
+    const deps = p.dependencies ?? {}
+    const bundles = p.dsh?.profile?.bundles ?? []
+    for (const [k, spec] of Object.entries(deps)) {
+      if (typeof spec !== 'string') continue
+      const isLink = spec.startsWith('link:')
+      const linkPath = isLink ? norm(resolve(dir, spec.slice(5))) : undefined
+      const matchesPath = linkPath !== undefined && (linkPath === target || dirname(linkPath) === target)
+      const matchesName = k.toLowerCase().includes(base)
+      if (!matchesPath && !matchesName) continue
+      out.push({
+        profile: name,
+        key: k,
+        linkTarget: isLink ? spec.slice(5) : undefined,
+        stale: isLink && !existsSync(linkPath),
+        hasBundle: bundles.includes(k),
+      })
+    }
+  }
+  return out
+}
 
-  // 匹配登记项:link 目标与路径一致,或依赖键名与目录名一致
-  let key = null
-  for (const [k, spec] of Object.entries(deps)) {
-    if (typeof spec !== 'string' || !spec.startsWith('link:')) continue
-    const linked = norm(resolve(profileDir, spec.slice(5)))
-    if (linked === target || dirname(linked) === target || norm(dirname(linked)) === target) { key = k; break }
-    if (k === target.split(sep).pop()) { key = k; break }
+/** 从指定 profile 移除一条登记(依赖 + bundles 条目)。 */
+export function uninstallFromProfile({ profile, key } = {}) {
+  const hints = []
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(String(profile ?? ''))) {
+    return { ok: false, hints, error: `profile 名不合法:${profile}` }
   }
-  if (key === null) {
-    hints.push('该路径没有登记在当前 profile 中(可能从未安装预览,或已卸载)——无需任何操作。')
-    return { found: false, hints, profileDir }
+  const profileDir = join(PROFILES_ROOT, profile)
+  const pkgPath = join(profileDir, 'package.json')
+  if (!existsSync(pkgPath)) return { ok: false, hints, error: `profile 不存在:${profile}` }
+  if (profile === 'desktop') return { ok: false, hints, error: 'desktop 是保留 profile,请在其界面内操作' }
+
+  const profileData = JSON.parse(readFileSync(pkgPath, 'utf8'))
+  if (!(key in (profileData.dependencies ?? {}))) {
+    return { ok: true, hints: [`profile ${profile} 中已无 ${key} 的登记(可能已卸载)`] }
   }
-  if (key === PKG_NAME) {
-    return { found: true, key, hints, error: '不能卸载生成器自身(本页面会随之消失);请在插件中心手动操作' }
+  // 正在运行本插件的当前 profile:拒绝移除生成器自身(否则本页面会消失)
+  const current = findProfileDir()
+  if (key === PKG_NAME && current !== null && norm(current) === norm(profileDir)) {
+    return { ok: false, hints, error: '不能从当前正在运行本插件的 profile 卸载生成器自身(页面会消失)' }
   }
 
-  // 1) 从 dsh.profile.bundles 移除登记
-  const bundles = profile.dsh?.profile?.bundles ?? []
+  // 1) bundles 条目移除
+  const bundles = profileData.dsh?.profile?.bundles ?? []
   const before = bundles.length
-  profile.dsh.profile.bundles = bundles.filter(b => b !== key)
-  const removedBundle = before !== profile.dsh.profile.bundles.length ? key : undefined
-  writeFileSync(pkgPath, JSON.stringify(profile, null, 2) + '\n')
+  profileData.dsh.profile.bundles = bundles.filter(b => b !== key)
+  const removedBundle = before !== profileData.dsh.profile.bundles.length ? key : undefined
+  writeFileSync(pkgPath, JSON.stringify(profileData, null, 2) + '\n')
 
-  // 2) pnpm remove 依赖(会保留 dsh.profile.bundles 等自定义字段)
+  // 2) pnpm remove 依赖
   const rm = spawnSync('pnpm', ['remove', key], { cwd: profileDir, encoding: 'utf8', timeout: 120000 })
   if (rm.status !== 0) {
-    return { found: true, key, profileDir, hints, error: `pnpm remove 失败:${String(rm.stderr ?? rm.stdout ?? '').slice(-300)}` }
+    return { ok: false, hints, error: `pnpm remove 失败:${String(rm.stderr ?? rm.stdout ?? '').slice(-300)}` }
   }
 
-  hints.push(`已从 profile(${profileDir})移除登记:依赖 ${key}` + (removedBundle ? ' + bundles 条目' : ''))
-  hints.push('正在运行的 dsh 实例需重启后完全生效(或让 AI 助手重启);浏览器刷新即可看到面板消失。')
-  hints.push('你的项目目录本身没有被删除——代码与数据仍在。确认不要了请自行执行:')
-  hints.push(`rm -rf ${target}`)
-  hints.push('重新启用:随时可再走一次「新建工作台」,或在插件中心重新登记。')
-  return { found: true, key, removedDependency: key, removedBundle, profileDir, hints }
+  hints.push(`已从 profile「${profile}」移除登记:依赖 ${key}` + (removedBundle ? ' + bundles 条目' : ''))
+  if (removedBundle) hints.push('该 profile 的实例重启后,侧栏面板即消失(浏览器刷新可见)。')
+  hints.push('你的项目目录本身没有被删除——代码与数据仍在,是否删除由你决定。')
+  return { ok: true, removedBundle, hints }
 }

@@ -483,35 +483,59 @@ function ScaffoldPage() {
   const err = result?.error;
   const ok = result?.ok === true;
   const [uninstallPath, setUninstallPath] = (0, import_react.useState)("");
+  const [scanBusy, setScanBusy] = (0, import_react.useState)(false);
+  const [found, setFound] = (0, import_react.useState)(null);
+  const [selected, setSelected] = (0, import_react.useState)([]);
   const [uninstallBusy, setUninstallBusy] = (0, import_react.useState)(false);
-  const [uninstallArmed, setUninstallArmed] = (0, import_react.useState)(false);
-  const [uninstallResult, setUninstallResult] = (0, import_react.useState)(null);
-  const doUninstall = () => {
-    if (uninstallBusy || uninstallPath.trim() === "") return;
-    if (!uninstallArmed) {
-      setUninstallArmed(true);
-      return;
-    }
-    setUninstallArmed(false);
+  const [uninstallOutcomes, setUninstallOutcomes] = (0, import_react.useState)(null);
+  const scan = () => {
+    if (scanBusy || uninstallPath.trim() === "") return;
+    setScanBusy(true);
+    setFound(null);
+    setUninstallOutcomes(null);
+    void (async () => {
+      try {
+        const res = await fetch(`${BASE}/uninstall-scan`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ path: uninstallPath.trim() })
+        });
+        if (!res.ok) {
+          setFound([]);
+          return;
+        }
+        const data = await res.json();
+        setFound(Array.isArray(data) ? data : []);
+      } catch {
+        setFound([]);
+      } finally {
+        setScanBusy(false);
+      }
+    })();
+  };
+  const uninstallSelected = () => {
+    if (uninstallBusy || selected.length === 0) return;
     setUninstallBusy(true);
+    setUninstallOutcomes(null);
     void (async () => {
       try {
         const res = await fetch(`${BASE}/uninstall`, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ path: uninstallPath.trim() })
+          body: JSON.stringify({ path: uninstallPath.trim(), profiles: selected })
         });
         if (res.status === 404) {
-          setUninstallResult({ hints: ["\u91CD\u542F dsh \u5B9E\u4F8B\u540E\u91CD\u8BD5(Ctrl+C \u505C\u6389\u518D\u91CD\u65B0\u542F\u52A8)\u3002"], found: false, error: "\u5F53\u524D\u8FD0\u884C\u7684\u5B9E\u4F8B\u662F\u65E7\u7248\u672C,\u7F3A\u5C11\u5378\u8F7D\u63A5\u53E3" });
+          setUninstallOutcomes([{ profile: "\u2014", key: "\u2014", ok: false, error: "\u5F53\u524D\u8FD0\u884C\u7684\u5B9E\u4F8B\u662F\u65E7\u7248\u672C,\u7F3A\u5C11\u5378\u8F7D\u63A5\u53E3\u2014\u2014\u91CD\u542F\u5B9E\u4F8B\u540E\u91CD\u8BD5" }]);
           return;
         }
         if (!res.ok) {
-          setUninstallResult({ hints: [], found: false, error: `HTTP ${res.status}` });
+          setUninstallOutcomes([{ profile: "\u2014", key: "\u2014", ok: false, error: `HTTP ${res.status}` }]);
           return;
         }
-        setUninstallResult(await res.json());
+        setUninstallOutcomes(await res.json());
+        setFound(null);
       } catch {
-        setUninstallResult({ hints: [], found: false, error: "\u6570\u636E\u670D\u52A1\u4E0D\u53EF\u8FBE(\u5B9E\u4F8B\u672A\u542F\u52A8\u6216\u7F51\u7EDC\u5F02\u5E38)" });
+        setUninstallOutcomes([{ profile: "\u2014", key: "\u2014", ok: false, error: "\u6570\u636E\u670D\u52A1\u4E0D\u53EF\u8FBE(\u5B9E\u4F8B\u672A\u542F\u52A8\u6216\u7F51\u7EDC\u5F02\u5E38)" }]);
       } finally {
         setUninstallBusy(false);
       }
@@ -667,7 +691,7 @@ function ScaffoldPage() {
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-card", style: { padding: "16px 20px", marginTop: 16 }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 13.5, fontWeight: 650, marginBottom: 4 }, children: "\u5378\u8F7D\u5DF2\u751F\u6210\u7684\u9879\u76EE" }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 12, color: "var(--tll-ink3)", marginBottom: 10 }, children: "\u8F93\u5165\u751F\u6210\u9879\u76EE\u7684\u8DEF\u5F84,\u628A\u5B83\u4ECE\u5F53\u524D profile \u7684\u767B\u8BB0\u4E2D\u79FB\u9664(\u9762\u677F\u968F\u4E4B\u6D88\u5931)\u3002\u53EA\u52A8\u767B\u8BB0,\u4E0D\u5220\u76EE\u5F55\u2014\u2014\u4F60\u7684\u4EE3\u7801\u4E0E\u6570\u636E\u4FDD\u7559\u3002" }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 12, color: "var(--tll-ink3)", marginBottom: 10 }, children: "\u8F93\u5165\u751F\u6210\u9879\u76EE\u7684\u8DEF\u5F84,\u626B\u63CF\u5B83\u5728\u6240\u6709 profile \u91CC\u7684\u767B\u8BB0(\u542B\u9879\u76EE\u6539\u540D/\u79FB\u52A8\u7559\u4E0B\u7684\u5931\u6548\u767B\u8BB0),\u6309\u9700\u79FB\u9664\u3002 \u53EA\u52A8\u767B\u8BB0,\u4E0D\u5220\u76EE\u5F55\u2014\u2014\u4F60\u7684\u4EE3\u7801\u4E0E\u6570\u636E\u4FDD\u7559\u3002" }),
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "120px 1fr auto", gap: 12, alignItems: "center" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u9879\u76EE\u8DEF\u5F84" }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
@@ -679,33 +703,54 @@ function ScaffoldPage() {
               value: uninstallPath,
               onChange: (e) => {
                 setUninstallPath(e.target.value);
-                setUninstallResult(null);
+                setFound(null);
+                setUninstallOutcomes(null);
               }
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
-            "button",
-            {
-              className: "tll-ai-btn",
-              style: { opacity: uninstallBusy || uninstallPath.trim() === "" ? 0.55 : 1 },
-              onClick: doUninstall,
-              children: uninstallBusy ? "\u5378\u8F7D\u4E2D\u2026" : uninstallArmed ? "\u786E\u8BA4\u5378\u8F7D" : "\u5378\u8F7D"
-            }
-          )
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "tll-ai-btn", style: { opacity: scanBusy || uninstallPath.trim() === "" ? 0.55 : 1 }, onClick: scan, children: scanBusy ? "\u626B\u63CF\u4E2D\u2026" : "\u626B\u63CF" })
         ] }),
-        uninstallResult !== null && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { marginTop: 10, fontSize: 12.5, lineHeight: 1.8, color: uninstallResult.error ? "var(--tll-down)" : "var(--tll-ink)" }, children: uninstallResult.error ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
-          "\u2717 ",
-          uninstallResult.error
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
-          uninstallResult.found ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
-            "\u2713 \u5DF2\u5378\u8F7D\u767B\u8BB0:",
-            uninstallResult.key,
-            uninstallResult.removedBundle ? " + bundles \u6761\u76EE" : ""
-          ] }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { children: "\u8BE5\u8DEF\u5F84\u672A\u767B\u8BB0\u5728\u5F53\u524D profile \u4E2D,\u65E0\u9700\u5378\u8F7D\u3002" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { color: "var(--tll-ink2)", marginTop: 4 }, children: uninstallResult.hints.map((h, i) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { children: h.startsWith("rm -rf") ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("code", { style: { color: "var(--tll-ink)" }, children: h }) : h }, i)) })
-        ] }) })
+        found !== null && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { marginTop: 12 }, children: found.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u6240\u6709 profile \u91CC\u90FD\u6CA1\u6709\u8BE5\u8DEF\u5F84\u7684\u767B\u8BB0\u2014\u2014\u65E0\u9700\u5378\u8F7D\u3002" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)", marginBottom: 6 }, children: [
+            "\u627E\u5230 ",
+            found.length,
+            " \u6761\u767B\u8BB0:"
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }, children: found.map((r) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+              "input",
+              {
+                type: "checkbox",
+                checked: selected.includes(r.profile),
+                onChange: (e) => {
+                  setSelected((s) => e.target.checked ? [...s, r.profile] : s.filter((x) => x !== r.profile));
+                }
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("b", { children: r.profile }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { style: { color: "var(--tll-ink2)" }, children: [
+              r.key,
+              r.linkTarget ? ` \u2192 ${r.linkTarget}` : ""
+            ] }),
+            r.stale && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "tll-pill", style: { color: "var(--tll-down)", background: "rgba(192,57,43,.1)" }, children: "\u5931\u6548(\u76EE\u5F55\u5DF2\u4E0D\u5B58\u5728)" })
+          ] }, r.profile)) }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "tll-ai-btn", style: { opacity: uninstallBusy || selected.length === 0 ? 0.55 : 1 }, onClick: uninstallSelected, children: uninstallBusy ? "\u5378\u8F7D\u4E2D\u2026" : `\u5378\u8F7D\u9009\u4E2D\u7684 ${selected.length} \u6761` })
+        ] }) }),
+        uninstallOutcomes !== null && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { marginTop: 12, fontSize: 12.5, lineHeight: 1.9 }, children: uninstallOutcomes.map((o) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginBottom: 8 }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { style: { color: o.ok ? "var(--tll-up)" : "var(--tll-down)", fontWeight: 600 }, children: [
+            o.ok ? "\u2713" : "\u2717",
+            " ",
+            o.profile
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { style: { color: "var(--tll-ink2)" }, children: [
+            " \u2014 ",
+            o.error ?? (o.hints ?? []).join(" ")
+          ] })
+        ] }, o.profile)) })
       ] })
     ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(IconCopy, { size: 12 }) }),
+    "      ",
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(IconCopy, { size: 12 }) })
   ] });
 }
