@@ -494,11 +494,28 @@ function ScaffoldPage() {
     }
     setUninstallArmed(false);
     setUninstallBusy(true);
-    void post("/uninstall", { path: uninstallPath.trim() }).then((res) => {
-      setUninstallResult(res ?? { hints: [], found: false, error: "\u6570\u636E\u670D\u52A1\u4E0D\u53EF\u8FBE" });
-    }).finally(() => {
-      setUninstallBusy(false);
-    });
+    void (async () => {
+      try {
+        const res = await fetch(`${BASE}/uninstall`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ path: uninstallPath.trim() })
+        });
+        if (res.status === 404) {
+          setUninstallResult({ hints: ["\u91CD\u542F dsh \u5B9E\u4F8B\u540E\u91CD\u8BD5(Ctrl+C \u505C\u6389\u518D\u91CD\u65B0\u542F\u52A8)\u3002"], found: false, error: "\u5F53\u524D\u8FD0\u884C\u7684\u5B9E\u4F8B\u662F\u65E7\u7248\u672C,\u7F3A\u5C11\u5378\u8F7D\u63A5\u53E3" });
+          return;
+        }
+        if (!res.ok) {
+          setUninstallResult({ hints: [], found: false, error: `HTTP ${res.status}` });
+          return;
+        }
+        setUninstallResult(await res.json());
+      } catch {
+        setUninstallResult({ hints: [], found: false, error: "\u6570\u636E\u670D\u52A1\u4E0D\u53EF\u8FBE(\u5B9E\u4F8B\u672A\u542F\u52A8\u6216\u7F51\u7EDC\u5F02\u5E38)" });
+      } finally {
+        setUninstallBusy(false);
+      }
+    })();
   };
   const firstPrompt = ok && result !== null ? [
     `\u8FD9\u662F\u4E00\u4E2A\u521A\u751F\u6210\u7684 dsh \u5DE5\u4F5C\u53F0\u63D2\u4EF6\u9879\u76EE(\u8DEF\u5F84 ${result.target},\u5305\u540D ${result.name},\u63D2\u4EF6 id ${result.id})\u3002`,

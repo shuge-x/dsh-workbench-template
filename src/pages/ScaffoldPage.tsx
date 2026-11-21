@@ -1,6 +1,6 @@
 /** 新建工作台:页面化脚手架 — 输入目标路径,自动从骨架生成一个可运行的 dsh 插件项目。 */
 import { useState, type ReactNode } from 'react'
-import { post, postScaffold, type ApiScaffoldResult } from '../api'
+import { BASE, post, postScaffold, type ApiScaffoldResult } from '../api'
 import { IconCopy } from '../icons'
 
 export function ScaffoldPage(): ReactNode {
@@ -52,9 +52,26 @@ export function ScaffoldPage(): ReactNode {
     if (!uninstallArmed) { setUninstallArmed(true); return }
     setUninstallArmed(false)
     setUninstallBusy(true)
-    void post<{ hints: string[]; found: boolean; key?: string; removedBundle?: string; error?: string }>('/uninstall', { path: uninstallPath.trim() })
-      .then(res => { setUninstallResult(res ?? { hints: [], found: false, error: '数据服务不可达' }) })
-      .finally(() => { setUninstallBusy(false) })
+    void (async () => {
+      try {
+        const res = await fetch(`${BASE}/uninstall`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ path: uninstallPath.trim() }),
+        })
+        if (res.status === 404) {
+          // 运行中的实例还是旧版服务端(没有卸载路由)——重启实例后重试
+          setUninstallResult({ hints: ['重启 dsh 实例后重试(Ctrl+C 停掉再重新启动)。'], found: false, error: '当前运行的实例是旧版本,缺少卸载接口' })
+          return
+        }
+        if (!res.ok) { setUninstallResult({ hints: [], found: false, error: `HTTP ${res.status}` }); return }
+        setUninstallResult(await res.json())
+      } catch {
+        setUninstallResult({ hints: [], found: false, error: '数据服务不可达(实例未启动或网络异常)' })
+      } finally {
+        setUninstallBusy(false)
+      }
+    })()
   }
 
   // 首次会话提示词:任意 AI 开发工具(ClaudeCode/Codex/OpenCode/dsh)加载生成目录后的第一句话。
