@@ -532,7 +532,8 @@ function ScaffoldPage() {
           setUninstallOutcomes([{ profile: "\u2014", key: "\u2014", ok: false, error: `HTTP ${res.status}` }]);
           return;
         }
-        setUninstallOutcomes(await res.json());
+        const data = await res.json();
+        setUninstallOutcomes(Array.isArray(data) ? data : data.results ?? []);
         setFound(null);
       } catch {
         setUninstallOutcomes([{ profile: "\u2014", key: "\u2014", ok: false, error: "\u6570\u636E\u670D\u52A1\u4E0D\u53EF\u8FBE(\u5B9E\u4F8B\u672A\u542F\u52A8\u6216\u7F51\u7EDC\u5F02\u5E38)" }]);

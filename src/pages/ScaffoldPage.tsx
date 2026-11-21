@@ -82,7 +82,8 @@ export function ScaffoldPage(): ReactNode {
           return
         }
         if (!res.ok) { setUninstallOutcomes([{ profile: '—', key: '—', ok: false, error: `HTTP ${res.status}` }]); return }
-        setUninstallOutcomes((await res.json()) as UninstallOutcome[])
+        const data = (await res.json()) as { results?: UninstallOutcome[] }
+        setUninstallOutcomes(Array.isArray(data) ? data : (data.results ?? []))
         setFound(null)
       } catch {
         setUninstallOutcomes([{ profile: '—', key: '—', ok: false, error: '数据服务不可达(实例未启动或网络异常)' }])
