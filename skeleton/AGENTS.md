@@ -16,7 +16,9 @@ index.js            Host 半区:webServer 前缀路由 /wb-api/*(同源数据服
 service/            数据层:api.mjs(查询函数)/ db.mjs(SQLite)/ seed.mjs(首启造数)
 src/client.tsx      Client 半区唯一 dsh 耦合点:PANELS 注册面板 + locale 字典注册(esbuild 单文件 bundle)
 src/locales.ts      本地化命名空间(zh/en 键一致);页面经 inject face 的 t() 取词
-src/theme.ts        设计系统:wb- tokens + 基础组件类 + 官方图标 sprite 挂载(共享资产)
+src/theme.ts        设计系统实现:wb- tokens + 基础组件类 + 官方图标 sprite 挂载(共享资产)
+design/             ★ 设计语言库:多套 DESIGN 变体(默认工作台中性 / 终端风 / 纸感),
+                    换肤 = 选一份覆盖根目录 DESIGN.md + 让 AI 按其 tokens 更新 theme.ts
 src/api.ts          前端请求层:同源 fetch 封装(get/post/stream)
 src/pages/          ★ 你的业务页面(主代码,长期演进;首页起步页刻意空白,业务从零填充)
 src/examples/       示例区:9 个范式页(教学代码)。源码常驻供 AI 阅读,但默认不注册进侧栏
@@ -24,6 +26,10 @@ src/examples/       示例区:9 个范式页(教学代码)。源码常驻供 AI 
 docs/EXAMPLES.md    范式索引 + 红线映射表(AI 开发先读它)
 scripts/guard.mjs   门禁:红线机器检查,发布前必过
 ```
+
+## 必读顺序
+
+AI 接手本项目:① 读本文件(行为红线)→ ② 读 `DESIGN.md`(视觉契约与 Do/Don't)→ ③ 读 `docs/EXAMPLES.md`(范式索引)→ ④ 按 src/examples/ 源码抄范式。写 UI 前必读 DESIGN.md 的 Do/Don't。
 
 ## 红线(违反 = guard 阻断或运行时崩)
 
