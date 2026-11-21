@@ -71,6 +71,18 @@ try {
   if (errs.length === 0) fail('smoke: 运行失败(手动跑 node scripts/smoke-render.mjs 看详情)')
 }
 
+// 语法检查:index.js 与 service/*.mjs 是纯 JS——TS 语法(type 注解)混入会在宿主装载时才炸(构建不查它们)
+const jsFiles = ['index.js', ...readdirSync('service').map(f => join('service', f)).filter(f => f.endsWith('.mjs'))]
+for (const f of jsFiles) {
+  try {
+    execSync(`node --check ${JSON.stringify(f)}`, { stdio: 'pipe' })
+  } catch (e) {
+    const out = String(e.stderr ?? e.message ?? '')
+    fail(`语法错误 ${f}: ${out.split('\n').slice(0, 3).join(' | ')}`)
+  }
+}
+if (failures === 0) ok(`Host 半区语法检查通过(node --check,${jsFiles.length} 个文件)`)
+
 if (failures > 0) {
   console.error(`[guard] ${failures} 项未过,发布阻断(规范见 docs/EXAMPLES.md 与 docs/dsh-plugin-playbook.md §7)`)
   process.exit(1)

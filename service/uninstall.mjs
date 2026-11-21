@@ -15,7 +15,7 @@ const PKG_ROOT = dirname(dirname(fileURLToPath(import.meta.url))) // .../dsh-wor
 const PKG_NAME = JSON.parse(readFileSync(join(PKG_ROOT, 'package.json'), 'utf8')).name
 
 /** 从插件安装位置向上推导 profile 目录(兼容 link: 与 pnpm git 两种安装布局)。 */
-function findProfileDir(): string | null {
+function findProfileDir() {
   let dir = PKG_ROOT
   for (let i = 0; i < 8; i += 1) {
     const marker = join(dir, 'package.json')
@@ -32,21 +32,23 @@ function findProfileDir(): string | null {
   return null
 }
 
-const norm = (p: string): string => resolve(p).replace(new RegExp(sep === '\\' ? '\\\\' : sep + '$'), '')
+const norm = (p) => resolve(p).replace(new RegExp(sep === '\\' ? '\\\\' : sep + '$'), '')
 
-export type UninstallResult = {
-  found: boolean
-  key?: string
-  removedDependency?: string
-  removedBundle?: string
-  profileDir?: string
-  hints: string[]
-  error?: string
-}
+/**
+ * @typedef {object} UninstallResult
+ * @property {boolean} found
+ * @property {string} [key]
+ * @property {string} [removedDependency]
+ * @property {string} [removedBundle]
+ * @property {string} [profileDir]
+ * @property {string[]} hints
+ * @property {string} [error]
+ */
+/** @returns {Promise<UninstallResult>} */
 
 /** 主入口:按项目路径卸载 profile 登记。 */
-export function uninstallByPath({ path }: { path: string }): UninstallResult {
-  const hints: string[] = []
+export function uninstallByPath({ path } = {}) {
+  const hints = []
   const profileDir = findProfileDir()
   if (profileDir === null) return { found: false, hints, error: '无法定位 profile 目录(本插件可能未通过 profile 安装)' }
 
@@ -56,7 +58,7 @@ export function uninstallByPath({ path }: { path: string }): UninstallResult {
   const target = norm(String(path ?? ''))
 
   // 匹配登记项:link 目标与路径一致,或依赖键名与目录名一致
-  let key: string | null = null
+  let key = null
   for (const [k, spec] of Object.entries(deps)) {
     if (typeof spec !== 'string' || !spec.startsWith('link:')) continue
     const linked = norm(resolve(join(profileDir, spec.slice(5))))
@@ -72,7 +74,7 @@ export function uninstallByPath({ path }: { path: string }): UninstallResult {
   }
 
   // 1) 从 dsh.profile.bundles 移除登记
-  const bundles: string[] = profile.dsh?.profile?.bundles ?? []
+  const bundles = profile.dsh?.profile?.bundles ?? []
   const before = bundles.length
   profile.dsh.profile.bundles = bundles.filter(b => b !== key)
   const removedBundle = before !== profile.dsh.profile.bundles.length ? key : undefined
