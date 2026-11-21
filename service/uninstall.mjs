@@ -61,7 +61,7 @@ export function uninstallByPath({ path } = {}) {
   let key = null
   for (const [k, spec] of Object.entries(deps)) {
     if (typeof spec !== 'string' || !spec.startsWith('link:')) continue
-    const linked = norm(resolve(join(profileDir, spec.slice(5))))
+    const linked = norm(resolve(profileDir, spec.slice(5)))
     if (linked === target || dirname(linked) === target || norm(dirname(linked)) === target) { key = k; break }
     if (k === target.split(sep).pop()) { key = k; break }
   }
