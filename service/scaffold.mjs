@@ -82,9 +82,12 @@ export function scaffoldProject({ target, name, id } = {}) {
     nextSteps: [
       `cd ${t}`,
       'npm install && npm run build',
-      // 首次必需:全新 profile 是 base 模板,先初始化出 web 壳(坑 #7);profile 名直接用插件 id,避免 <profile> 占位符被原样复制
+      '# ① 初始化 profile——全新 profile 没有 web 界面,必须先补;这里临时用 3124,避免与你真正要用的 3123 冲突',
+      '#    注意:这条会前台启动一个临时服务并占住终端——等它打印出地址后按 Ctrl+C 停掉即可,此时 profile 已就绪',
       `npx @deepseek-ai/dsh --profile ${i} --from-default-profile web --port 3124`,
+      '# ② 把本项目登记进 profile',
       `npx @deepseek-ai/dsh plugin --profile ${i} add ${t}`,
+      '# ③ 启动你的工作台(长期运行)——浏览器访问 http://127.0.0.1:3123',
       `npx @deepseek-ai/dsh --profile ${i} --no-open --port 3123`,
     ],
   }

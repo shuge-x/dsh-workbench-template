@@ -574,14 +574,14 @@ function ScaffoldPage() {
             lineHeight: 1.7,
             overflow: "auto",
             margin: 0
-          }, children: result.nextSteps?.map((s) => "$ " + s).join("\n") }),
+          }, children: result.nextSteps?.map((s) => s.startsWith("#") ? s : "$ " + s).join("\n") }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
             "button",
             {
               className: "tll-pill-btn",
               style: { position: "absolute", top: 8, right: 8 },
               onClick: () => {
-                void navigator.clipboard?.writeText((result.nextSteps ?? []).map((s) => "$ " + s).join("\n"));
+                void navigator.clipboard?.writeText((result.nextSteps ?? []).map((s) => s.startsWith("#") ? s : "$ " + s).join("\n"));
               },
               children: "\u590D\u5236"
             }

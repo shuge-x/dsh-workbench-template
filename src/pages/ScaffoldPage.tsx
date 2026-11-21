@@ -104,10 +104,10 @@ export function ScaffoldPage(): ReactNode {
               <pre style={{
                 background: 'var(--tll-card2)', border: '1px solid var(--tll-line)', borderRadius: 10,
                 padding: '12px 14px', fontSize: 12, lineHeight: 1.7, overflow: 'auto', margin: 0,
-              }}>{result.nextSteps?.map(s => '$ ' + s).join('\n')}</pre>
+              }}>{result.nextSteps?.map(s => (s.startsWith('#') ? s : '$ ' + s)).join('\n')}</pre>
               <button
                 className="tll-pill-btn" style={{ position: 'absolute', top: 8, right: 8 }}
-                onClick={() => { void navigator.clipboard?.writeText((result.nextSteps ?? []).map(s => '$ ' + s).join('\n')) }}
+                onClick={() => { void navigator.clipboard?.writeText((result.nextSteps ?? []).map(s => (s.startsWith('#') ? s : '$ ' + s)).join('\n')) }}
               >复制</button>
             </div>
             <div style={{ fontSize: 12, color: 'var(--tll-ink3)', marginTop: 10 }}>
