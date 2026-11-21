@@ -564,37 +564,18 @@ function ScaffoldPage() {
           " \xB7 \u7AEF\u53E3 ",
           result.port
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { position: "relative" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("pre", { style: {
-            background: "var(--tll-card2)",
-            border: "1px solid var(--tll-line)",
-            borderRadius: 10,
-            padding: "12px 14px",
-            fontSize: 12,
-            lineHeight: 1.7,
-            overflow: "auto",
-            margin: 0
-          }, children: result.nextSteps?.map((s) => s.startsWith("#") ? s : "$ " + s).join("\n") }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
-            "button",
-            {
-              className: "tll-pill-btn",
-              style: { position: "absolute", top: 8, right: 8 },
-              onClick: () => {
-                void navigator.clipboard?.writeText((result.nextSteps ?? []).map((s) => s.startsWith("#") ? s : "$ " + s).join("\n"));
-              },
-              children: "\u590D\u5236"
-            }
-          )
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { fontSize: 12, color: "var(--tll-ink3)", marginTop: 10 }, children: [
-          "\u5B89\u88C5\u8FD0\u884C:\u5148\u8DD1\u4E0A\u9762\u7684\u547D\u4EE4;\u9879\u76EE\u81EA\u5E26 ",
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("b", { children: "AGENTS.md" }),
-          "(AI \u624B\u518C)\u4E0E docs/EXAMPLES.md(\u8303\u5F0F\u7D22\u5F15)\u2014\u2014 ClaudeCode / Codex / OpenCode \u52A0\u8F7D\u76EE\u5F55\u5373\u81EA\u52A8\u751F\u6548\u3002"
-        ] }),
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px dashed var(--tll-line)" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-row", style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "AI \u5F00\u53D1:\u9996\u6B21\u4F1A\u8BDD\u63D0\u793A\u8BCD" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 13.5, fontWeight: 650, marginBottom: 8 }, children: "\u4E3B\u8DEF\u5F84:\u4EA4\u7ED9 AI \u5F00\u53D1" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)", lineHeight: 1.9, marginBottom: 10 }, children: [
+            "\u2460 \u7528 ClaudeCode / Codex / OpenCode \u6253\u5F00\u9879\u76EE\u76EE\u5F55",
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("br", {}),
+            "\u2461 \u7C98\u8D34\u4E0B\u65B9\u300C\u9996\u6B21\u4F1A\u8BDD\u63D0\u793A\u8BCD\u300D\u2014\u2014\u6784\u5EFA\u3001\u95E8\u7981\u3001\u5F00\u53D1\u8FED\u4EE3\u5168\u90E8\u7531 AI \u6309 AGENTS.md \u6267\u884C,\u4F60\u4E0D\u9700\u8981\u624B\u52A8\u6572\u547D\u4EE4",
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("br", {}),
+            "\u2462 \u60F3\u5728\u6D4F\u89C8\u5668\u91CC\u770B\u6548\u679C:\u76F4\u63A5\u8BA9 AI \u8FD0\u884C ",
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("code", { children: "./start.sh" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "\u9996\u6B21\u4F1A\u8BDD\u63D0\u793A\u8BCD" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12, color: "var(--tll-ink2)" }, children: "\u52A0\u8F7D\u76EE\u5F55\u540E\u7C98\u8D34\u7ED9 AI(\u66FF\u6362\u6700\u540E\u4E00\u884C\u7684\u4E1A\u52A1\u9700\u6C42)" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
               "button",
@@ -620,6 +601,33 @@ function ScaffoldPage() {
             margin: 0,
             whiteSpace: "pre-wrap"
           }, children: firstPrompt })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px dashed var(--tll-line)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "\u53EF\u9009:\u81EA\u5DF1\u5728 dsh \u91CC\u9884\u89C8\u8FD0\u884C" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12, color: "var(--tll-ink2)" }, children: "\u4E00\u6761\u547D\u4EE4,\u81EA\u52A8\u5B8C\u6210 \u6784\u5EFA/\u521D\u59CB\u5316/\u767B\u8BB0/\u542F\u52A8;\u542F\u52A8\u540E\u7EC8\u7AEF\u88AB\u5360\u7528\u5C5E\u6B63\u5E38,\u4E5F\u53EF\u8BA9 AI \u4EE3\u8DD1" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+              "button",
+              {
+                className: "tll-pill-btn",
+                style: { marginLeft: "auto" },
+                onClick: () => {
+                  void navigator.clipboard?.writeText(`cd ${result.target ?? ""} && ./start.sh`).catch(() => {
+                  });
+                },
+                children: "\u590D\u5236"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("pre", { style: {
+            background: "var(--tll-card2)",
+            border: "1px solid var(--tll-line)",
+            borderRadius: 10,
+            padding: "12px 14px",
+            fontSize: 12,
+            lineHeight: 1.7,
+            margin: 0
+          }, children: `cd ${result.target ?? ""} && ./start.sh` })
         ] })
       ] })
     ] }),

@@ -59,10 +59,11 @@ npm run prepack      # guard + build(发包前自动跑)
 
 - **client.js(src/)改动**:dsh 实例不重启,浏览器刷新即生效(rev 机制)
 - **Host(index.js/service/)改动**:需重启 dsh 实例
-- 装进实例(全新 profile 先补 web 壳,坑 #7):
-  `npx @deepseek-ai/dsh --profile <名字> --from-default-profile web --port 3124`(初始化会前台起服务,需 Ctrl+C 或换端口;3080 被占时必须带 --port)
-  `npx @deepseek-ai/dsh plugin --profile <名字> add <本项目>`
-- 起实例:`npx @deepseek-ai/dsh --profile <名字> --no-open --port <port>`
+- **预览(推荐)**:项目根目录 `./start.sh`——自动完成 构建/初始化 profile(首次)/插件登记/启动(启动后终端被占用属正常)
+  或手动三步:① `npx @deepseek-ai/dsh --profile <名字> --from-default-profile web --port 3124`(首次补 web 壳,会前台起服务;3080 被占时必须带 --port)
+  ② 启动实例 ③ **另一终端** `npx @deepseek-ai/dsh plugin --profile <名字> add <本项目>`(热登记,无需停服务)→ 刷新浏览器
+- **client.js(src/)改动**:dsh 实例不重启,浏览器刷新即生效(rev 机制)
+- **Host(index.js/service/)改动**:需重启 dsh 实例
 
 ## 参考文档与项目
 

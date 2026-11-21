@@ -100,24 +100,15 @@ export function ScaffoldPage(): ReactNode {
             <div style={{ fontSize: 12.5, color: 'var(--tll-ink2)', marginBottom: 12 }}>
               包名 {result.name} · 插件 id {result.id} · 端口 {result.port}
             </div>
-            <div style={{ position: 'relative' }}>
-              <pre style={{
-                background: 'var(--tll-card2)', border: '1px solid var(--tll-line)', borderRadius: 10,
-                padding: '12px 14px', fontSize: 12, lineHeight: 1.7, overflow: 'auto', margin: 0,
-              }}>{result.nextSteps?.map(s => (s.startsWith('#') ? s : '$ ' + s)).join('\n')}</pre>
-              <button
-                className="tll-pill-btn" style={{ position: 'absolute', top: 8, right: 8 }}
-                onClick={() => { void navigator.clipboard?.writeText((result.nextSteps ?? []).map(s => (s.startsWith('#') ? s : '$ ' + s)).join('\n')) }}
-              >复制</button>
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--tll-ink3)', marginTop: 10 }}>
-              安装运行:先跑上面的命令;项目自带 <b>AGENTS.md</b>(AI 手册)与 docs/EXAMPLES.md(范式索引)——
-              ClaudeCode / Codex / OpenCode 加载目录即自动生效。
-            </div>
-
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed var(--tll-line)' }}>
-              <div className="tll-row" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <span style={{ fontSize: 13.5, fontWeight: 650 }}>AI 开发:首次会话提示词</span>
+              <div style={{ fontSize: 13.5, fontWeight: 650, marginBottom: 8 }}>主路径:交给 AI 开发</div>
+              <div style={{ fontSize: 12.5, color: 'var(--tll-ink2)', lineHeight: 1.9, marginBottom: 10 }}>
+                ① 用 ClaudeCode / Codex / OpenCode 打开项目目录<br />
+                ② 粘贴下方「首次会话提示词」——构建、门禁、开发迭代全部由 AI 按 AGENTS.md 执行,你不需要手动敲命令<br />
+                ③ 想在浏览器里看效果:直接让 AI 运行 <code>./start.sh</code>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: 13.5, fontWeight: 650 }}>首次会话提示词</span>
                 <span style={{ fontSize: 12, color: 'var(--tll-ink2)' }}>加载目录后粘贴给 AI(替换最后一行的业务需求)</span>
                 <button
                   className="tll-pill-btn" style={{ marginLeft: 'auto' }}
@@ -129,6 +120,21 @@ export function ScaffoldPage(): ReactNode {
                 padding: '12px 14px', fontSize: 12, lineHeight: 1.7, overflow: 'auto', margin: 0,
                 whiteSpace: 'pre-wrap',
               }}>{firstPrompt}</pre>
+            </div>
+
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed var(--tll-line)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: 13.5, fontWeight: 650 }}>可选:自己在 dsh 里预览运行</span>
+                <span style={{ fontSize: 12, color: 'var(--tll-ink2)' }}>一条命令,自动完成 构建/初始化/登记/启动;启动后终端被占用属正常,也可让 AI 代跑</span>
+                <button
+                  className="tll-pill-btn" style={{ marginLeft: 'auto' }}
+                  onClick={() => { void navigator.clipboard?.writeText(`cd ${result.target ?? ''} && ./start.sh`).catch(() => {}) }}
+                >复制</button>
+              </div>
+              <pre style={{
+                background: 'var(--tll-card2)', border: '1px solid var(--tll-line)', borderRadius: 10,
+                padding: '12px 14px', fontSize: 12, lineHeight: 1.7, margin: 0,
+              }}>{`cd ${result.target ?? ''} && ./start.sh`}</pre>
             </div>
           </div>
         )}

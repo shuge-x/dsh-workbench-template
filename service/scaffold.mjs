@@ -81,14 +81,8 @@ export function scaffoldProject({ target, name, id } = {}) {
     files,
     nextSteps: [
       `cd ${t}`,
-      'npm install && npm run build',
-      '# ① 初始化 profile——全新 profile 没有 web 界面,必须先补;这里临时用 3124,避免与你真正要用的 3123 冲突',
-      '#    注意:这条会前台启动一个临时服务并占住终端——等它打印出地址后按 Ctrl+C 停掉即可,此时 profile 已就绪',
-      `npx @deepseek-ai/dsh --profile ${i} --from-default-profile web --port 3124`,
-      '# ② 把本项目登记进 profile',
-      `npx @deepseek-ai/dsh plugin --profile ${i} add ${t}`,
-      '# ③ 启动你的工作台(长期运行)——浏览器访问 http://127.0.0.1:3123',
-      `npx @deepseek-ai/dsh --profile ${i} --no-open --port 3123`,
+      '把目录交给 AI 开发工具(ClaudeCode/Codex/OpenCode),按 AGENTS.md 开始开发(手册与范式已就绪)',
+      './start.sh   # 可选:在 dsh 里预览运行(自动构建/登记/启动)',
     ],
   }
 }
