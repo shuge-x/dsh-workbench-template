@@ -544,13 +544,13 @@ function ScaffoldPage() {
   };
   const firstPrompt = ok && result !== null ? [
     `\u8FD9\u662F\u4E00\u4E2A\u521A\u751F\u6210\u7684 dsh \u5DE5\u4F5C\u53F0\u63D2\u4EF6\u9879\u76EE(\u8DEF\u5F84 ${result.target},\u5305\u540D ${result.name},\u63D2\u4EF6 id ${result.id})\u3002`,
-    "\u8BF7\u5148\u6309\u987A\u5E8F\u9605\u8BFB\u5E76\u9075\u5B88:",
-    "1. AGENTS.md \u2014\u2014 \u9879\u76EE\u8EAB\u4EFD\u3001\u7EA2\u7EBF\u3001\u5F00\u53D1\u5DE5\u4F5C\u6D41",
-    "2. docs/EXAMPLES.md \u2014\u2014 \u8303\u5F0F\u7D22\u5F15\u4E0E\u7EA2\u7EBF\u6620\u5C04\u8868",
-    "3. src/examples/ \u2014\u2014 9 \u4E2A\u793A\u4F8B\u9875\u6E90\u7801(\u6E32\u67D3\u6548\u679C:\u628A src/client.tsx \u7684 SHOW_EXAMPLES \u7F6E true)",
+    "\u8BF7\u5148\u5B8C\u6210\u300C\u5165\u804C\u300D,\u6682\u65F6\u4E0D\u8981\u5199\u4EFB\u4F55\u4EE3\u7801:",
+    "1. \u8BFB\u5B8C AGENTS.md \u2014\u2014 \u9879\u76EE\u8EAB\u4EFD\u3001\u7EA2\u7EBF\u3001\u5F00\u53D1\u5DE5\u4F5C\u6D41",
+    "2. \u8BFB\u5B8C docs/EXAMPLES.md \u4E0E src/examples/ \u7684 9 \u4E2A\u793A\u4F8B\u9875\u6E90\u7801(\u6E32\u67D3\u6548\u679C:\u628A src/client.tsx \u7684 SHOW_EXAMPLES \u7F6E true)",
+    "3. \u7528\u51E0\u53E5\u8BDD\u5411\u6211\u590D\u8FF0:\u8FD9\u4E2A\u76EE\u5F55\u662F\u4EC0\u4E48\u3001\u6709\u54EA\u4E9B\u65E2\u5B9A\u7EA6\u675F\u3001\u4F60\u51C6\u5907\u6309\u4EC0\u4E48\u5DE5\u4F5C\u6D41\u5F00\u53D1;\u7136\u540E\u5411\u6211\u63D0\u51FA\u4F60\u9700\u8981\u6F84\u6E05\u7684\u95EE\u9898",
     "",
-    "\u7136\u540E\u5B9E\u73B0\u6211\u7684\u9700\u6C42:\u3010\u5728\u8FD9\u91CC\u5199\u4E0B\u4F60\u7684\u4E1A\u52A1\u9700\u6C42\u3011",
-    "\u7EA6\u675F:\u9875\u9762\u8303\u5F0F\u7167 examples \u6284,\u4E0D\u6539 examples/ \u4E0E theme.ts;\u4E3B\u4EE3\u7801\u4E0D import \u793A\u4F8B\u533A;",
+    "\u6211\u4F1A\u5728\u4E0B\u4E00\u6761\u6D88\u606F\u91CC\u7ED9\u51FA\u9700\u6C42\u63CF\u8FF0\u3002\u5F00\u53D1\u7EA6\u675F(\u5168\u7A0B\u9002\u7528):",
+    "\u9875\u9762\u8303\u5F0F\u7167 examples \u6284,\u4E0D\u6539 examples/ \u4E0E theme.ts;\u4E3B\u4EE3\u7801\u4E0D import \u793A\u4F8B\u533A;",
     "\u6BCF\u4E2A\u65B0\u9875\u9762\u6CE8\u518C\u8FDB src/client.tsx \u7684 PANELS \u5E76\u5E26 .wb-page \u6839\u5BB9\u5668;",
     "\u6BCF\u6B21\u6539\u5B8C\u8DD1 npm run guard && npm run build,\u5168\u7EFF\u624D\u7B97\u5B8C\u6210\u3002"
   ].join("\n") : "";
@@ -636,7 +636,7 @@ function ScaffoldPage() {
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "\u9996\u6B21\u4F1A\u8BDD\u63D0\u793A\u8BCD" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12, color: "var(--tll-ink2)" }, children: "\u52A0\u8F7D\u76EE\u5F55\u540E\u7C98\u8D34\u7ED9 AI(\u66FF\u6362\u6700\u540E\u4E00\u884C\u7684\u4E1A\u52A1\u9700\u6C42)" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12, color: "var(--tll-ink2)" }, children: "\u590D\u5236\u5373\u7528,\u65E0\u9700\u4FEE\u6539\u2014\u2014\u7C98\u8D34\u540E AI \u4F1A\u8BFB\u624B\u518C\u5E76\u5411\u4F60\u8981\u9700\u6C42" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
               "button",
               {

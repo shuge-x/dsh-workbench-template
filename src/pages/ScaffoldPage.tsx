@@ -91,16 +91,17 @@ export function ScaffoldPage(): ReactNode {
     })()
   }
 
-  // 首次会话提示词:任意 AI 开发工具(ClaudeCode/Codex/OpenCode/dsh)加载生成目录后的第一句话。
+  // 首次会话提示词 = 入职引导:让 AI 了解背景与约束,然后主动向用户要需求。
+  // 需求由用户在第二次对话自然给出——提示词整段复制即用,不含任何占位符。
   const firstPrompt = ok && result !== null ? [
     `这是一个刚生成的 dsh 工作台插件项目(路径 ${result.target},包名 ${result.name},插件 id ${result.id})。`,
-    '请先按顺序阅读并遵守:',
-    '1. AGENTS.md —— 项目身份、红线、开发工作流',
-    '2. docs/EXAMPLES.md —— 范式索引与红线映射表',
-    '3. src/examples/ —— 9 个示例页源码(渲染效果:把 src/client.tsx 的 SHOW_EXAMPLES 置 true)',
+    '请先完成「入职」,暂时不要写任何代码:',
+    '1. 读完 AGENTS.md —— 项目身份、红线、开发工作流',
+    '2. 读完 docs/EXAMPLES.md 与 src/examples/ 的 9 个示例页源码(渲染效果:把 src/client.tsx 的 SHOW_EXAMPLES 置 true)',
+    '3. 用几句话向我复述:这个目录是什么、有哪些既定约束、你准备按什么工作流开发;然后向我提出你需要澄清的问题',
     '',
-    '然后实现我的需求:【在这里写下你的业务需求】',
-    '约束:页面范式照 examples 抄,不改 examples/ 与 theme.ts;主代码不 import 示例区;',
+    '我会在下一条消息里给出需求描述。开发约束(全程适用):',
+    '页面范式照 examples 抄,不改 examples/ 与 theme.ts;主代码不 import 示例区;',
     '每个新页面注册进 src/client.tsx 的 PANELS 并带 .wb-page 根容器;',
     '每次改完跑 npm run guard && npm run build,全绿才算完成。',
   ].join('\n') : ''
@@ -158,7 +159,7 @@ export function ScaffoldPage(): ReactNode {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                 <span style={{ fontSize: 13.5, fontWeight: 650 }}>首次会话提示词</span>
-                <span style={{ fontSize: 12, color: 'var(--tll-ink2)' }}>加载目录后粘贴给 AI(替换最后一行的业务需求)</span>
+                <span style={{ fontSize: 12, color: 'var(--tll-ink2)' }}>复制即用,无需修改——粘贴后 AI 会读手册并向你要需求</span>
                 <button
                   className="tll-pill-btn" style={{ marginLeft: 'auto' }}
                   onClick={() => { void navigator.clipboard?.writeText(firstPrompt).catch(() => {}) }}
