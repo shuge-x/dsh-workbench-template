@@ -301,6 +301,7 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 | **官方图标系统**(sprite + <use>) | ✅ | `skeleton/src/theme.ts` mountIconSprite + `src/examples/IconsPage` | 图标组件是 <use> 引用,插件自挂 ICON_SYMBOLS 符号表(幂等+可清理);素材 MIT,零拷贝 |
 | **共享资产镜像**(skeleton 唯一源) | ✅ | `scripts/sync-shared.mjs` + guard 镜像检查 | theme/examples/EXAMPLES.md 由 skeleton 单向同步;guard 逐字节比对,漂移阻断;主代码 import 示例区直接 fail(边界) |
 | **tsc 静态引用检查**(guard 内置) | ✅ | `tsconfig.json` + `src/vendor.d.ts` | esbuild 不查标识符引用(坑 #15);lenient 配置 + 自维护官方包类型面(以浏览器实测契约为准,npm rc.1 的 .d.ts 与运行时不同步) |
+| **插件数据目录**(升级不丢数据) | ✅ | `skeleton/service/db.mjs` | 数据落 `<profile根>/data/<包名>/`(向上找 dsh.profile 标记推导)——GitHub/npm 安装的包目录在 update 时会被整体替换,数据放包内=升级即清空;link 安装回退包内。表结构演进用 PRAGMA user_version + 迁移步骤,勿裸改 CREATE TABLE |
 | **图标命名:npm 镜像与运行时不同步** | 🔶 | 实测(dsh-ai-toolbox) | npm 发布包 62 个唯一图形 vs 运行时 seed 表 96+,命名不一致——选图标以**运行时实测**为准(在浏览器里枚举),npm 文档仅参考 |
 | **V8 新版 SyntaxError 不带 position** | 🔶 | dev-toolbox JsonFormatter | Node 24/V8 新版错误对象无 position 字段,行号反推失效——兜底方案:递归下降结构扫描器(只定位不建值) |
 | **插件级 Config + locale**(示范已入骨架) | ✅ | `skeleton/index.js`(Config)+ `skeleton/src/locales.ts` | Config=Schema.object → apply(ctx, config) 第二参;locale=inject 'locale' + ctx.locale.register/bind 经 inject face 下发 t;**配置表单 UI 需自绘**(plugins.row.config 插槽,契约见 AGENTS.md) |

@@ -1,12 +1,41 @@
 /** 数据库层骨架:SQLite(node:sqlite),首启自动建表 + 造数(确定性)。 */
 import { DatabaseSync } from 'node:sqlite'
-import { mkdirSync, rmSync } from 'node:fs'
+import { mkdirSync, rmSync, existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { seed } from './seed.mjs'
 
-export const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), 'data')
-export const DB_PATH = join(DATA_DIR, 'workbench.db')
+const here = dirname(fileURLToPath(import.meta.url))       // .../<包名>/service
+const PKG_ROOT = dirname(here)                              // 包根
+const PKG_NAME = JSON.parse(readFileSync(join(PKG_ROOT, 'package.json'), 'utf8')).name
+
+/** 从包根向上找 profile 根(package.json 带 dsh.profile 标记);独立运行返回 null。
+ *  兼容 link:(realpath=项目目录,向上无 profile)与 pnpm git(.pnpm 布局,向上有)两种安装形态。 */
+function findProfileRoot() {
+  let dir = PKG_ROOT
+  for (let i = 0; i < 10; i += 1) {
+    const marker = join(dir, 'package.json')
+    if (existsSync(marker)) {
+      try {
+        const p = JSON.parse(readFileSync(marker, 'utf8'))
+        if (p?.dsh?.profile) return dir
+      } catch { /* 继续向上 */ }
+    }
+    const parent = dirname(dir)
+    if (parent === dir) return null
+    dir = parent
+  }
+  return null
+}
+
+/**
+ * 数据目录:优先 <profile根>/data/<包名>/——跟随 profile 的稳定位置,
+ * 插件升级/重装(node_modules 包目录被替换)不触碰数据。
+ * profile 之外独立运行时回退到包内 data/(当前行为)。
+ */
+const profileRoot = findProfileRoot()
+export const DATA_DIR = profileRoot ? join(profileRoot, 'data', PKG_NAME) : join(here, 'data')
+export const DB_PATH = join(DATA_DIR, 'data.db')
 
 let db = null
 

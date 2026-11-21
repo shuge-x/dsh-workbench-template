@@ -59,6 +59,8 @@ scripts/guard.mjs   门禁:红线机器检查,发布前必过
    需要时再补 en 键位(键需一致)。
 4. **数据与 AI 能力**:骨架自带的 SQLite/service 与 /ai-stream 保留但默认闲置;
    业务确实需要时再启用或业务化,不要提前改造。
+   数据落 `<profile根>/data/<包名>/`(升级/重装不丢);表结构演进用
+   PRAGMA user_version 记版本并写迁移步骤,不要裸改 CREATE TABLE。
 
 ## 命令
 
