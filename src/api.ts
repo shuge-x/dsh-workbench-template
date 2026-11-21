@@ -12,7 +12,7 @@ export interface ApiScaffoldResult {
   nextSteps?: string[]
 }
 
-async function post<T>(path: string, body: unknown): Promise<T | null> {
+export async function post<T>(path: string, body: unknown): Promise<T | null> {
   try {
     const res = await fetch(`${BASE}${path}`, {
       method: 'POST',

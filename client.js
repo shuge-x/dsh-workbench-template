@@ -482,6 +482,24 @@ function ScaffoldPage() {
   };
   const err = result?.error;
   const ok = result?.ok === true;
+  const [uninstallPath, setUninstallPath] = (0, import_react.useState)("");
+  const [uninstallBusy, setUninstallBusy] = (0, import_react.useState)(false);
+  const [uninstallArmed, setUninstallArmed] = (0, import_react.useState)(false);
+  const [uninstallResult, setUninstallResult] = (0, import_react.useState)(null);
+  const doUninstall = () => {
+    if (uninstallBusy || uninstallPath.trim() === "") return;
+    if (!uninstallArmed) {
+      setUninstallArmed(true);
+      return;
+    }
+    setUninstallArmed(false);
+    setUninstallBusy(true);
+    void post("/uninstall", { path: uninstallPath.trim() }).then((res) => {
+      setUninstallResult(res ?? { hints: [], found: false, error: "\u6570\u636E\u670D\u52A1\u4E0D\u53EF\u8FBE" });
+    }).finally(() => {
+      setUninstallBusy(false);
+    });
+  };
   const firstPrompt = ok && result !== null ? [
     `\u8FD9\u662F\u4E00\u4E2A\u521A\u751F\u6210\u7684 dsh \u5DE5\u4F5C\u53F0\u63D2\u4EF6\u9879\u76EE(\u8DEF\u5F84 ${result.target},\u5305\u540D ${result.name},\u63D2\u4EF6 id ${result.id})\u3002`,
     "\u8BF7\u5148\u6309\u987A\u5E8F\u9605\u8BFB\u5E76\u9075\u5B88:",
@@ -629,6 +647,46 @@ function ScaffoldPage() {
             margin: 0
           }, children: `cd ${result.target ?? ""} && ./start.sh` })
         ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-card", style: { padding: "16px 20px", marginTop: 16 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 13.5, fontWeight: 650, marginBottom: 4 }, children: "\u5378\u8F7D\u5DF2\u751F\u6210\u7684\u9879\u76EE" }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 12, color: "var(--tll-ink3)", marginBottom: 10 }, children: "\u8F93\u5165\u751F\u6210\u9879\u76EE\u7684\u8DEF\u5F84,\u628A\u5B83\u4ECE\u5F53\u524D profile \u7684\u767B\u8BB0\u4E2D\u79FB\u9664(\u9762\u677F\u968F\u4E4B\u6D88\u5931)\u3002\u53EA\u52A8\u767B\u8BB0,\u4E0D\u5220\u76EE\u5F55\u2014\u2014\u4F60\u7684\u4EE3\u7801\u4E0E\u6570\u636E\u4FDD\u7559\u3002" }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "120px 1fr auto", gap: 12, alignItems: "center" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u9879\u76EE\u8DEF\u5F84" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+            "input",
+            {
+              className: "tll-search",
+              style: { width: "100%" },
+              placeholder: "/Volumes/NVME980/shuge-harness/dsh-writer-desk",
+              value: uninstallPath,
+              onChange: (e) => {
+                setUninstallPath(e.target.value);
+                setUninstallResult(null);
+              }
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+            "button",
+            {
+              className: "tll-ai-btn",
+              style: { opacity: uninstallBusy || uninstallPath.trim() === "" ? 0.55 : 1 },
+              onClick: doUninstall,
+              children: uninstallBusy ? "\u5378\u8F7D\u4E2D\u2026" : uninstallArmed ? "\u786E\u8BA4\u5378\u8F7D" : "\u5378\u8F7D"
+            }
+          )
+        ] }),
+        uninstallResult !== null && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { marginTop: 10, fontSize: 12.5, lineHeight: 1.8, color: uninstallResult.error ? "var(--tll-down)" : "var(--tll-ink)" }, children: uninstallResult.error ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+          "\u2717 ",
+          uninstallResult.error
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+          uninstallResult.found ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
+            "\u2713 \u5DF2\u5378\u8F7D\u767B\u8BB0:",
+            uninstallResult.key,
+            uninstallResult.removedBundle ? " + bundles \u6761\u76EE" : ""
+          ] }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { children: "\u8BE5\u8DEF\u5F84\u672A\u767B\u8BB0\u5728\u5F53\u524D profile \u4E2D,\u65E0\u9700\u5378\u8F7D\u3002" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { color: "var(--tll-ink2)", marginTop: 4 }, children: uninstallResult.hints.map((h, i) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { children: h.startsWith("rm -rf") ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("code", { style: { color: "var(--tll-ink)" }, children: h }) : h }, i)) })
+        ] }) })
       ] })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(IconCopy, { size: 12 }) })

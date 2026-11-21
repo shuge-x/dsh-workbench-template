@@ -1,6 +1,6 @@
 /** 新建工作台:页面化脚手架 — 输入目标路径,自动从骨架生成一个可运行的 dsh 插件项目。 */
 import { useState, type ReactNode } from 'react'
-import { postScaffold, type ApiScaffoldResult } from '../api'
+import { post, postScaffold, type ApiScaffoldResult } from '../api'
 import { IconCopy } from '../icons'
 
 export function ScaffoldPage(): ReactNode {
@@ -41,6 +41,21 @@ export function ScaffoldPage(): ReactNode {
 
   const err = result?.error
   const ok = result?.ok === true
+
+  // 卸载:输入路径 → 两段确认(防误触)→ 调 Host 路由移除 profile 登记
+  const [uninstallPath, setUninstallPath] = useState('')
+  const [uninstallBusy, setUninstallBusy] = useState(false)
+  const [uninstallArmed, setUninstallArmed] = useState(false)
+  const [uninstallResult, setUninstallResult] = useState<{ hints: string[]; found: boolean; key?: string; removedBundle?: string; error?: string } | null>(null)
+  const doUninstall = (): void => {
+    if (uninstallBusy || uninstallPath.trim() === '') return
+    if (!uninstallArmed) { setUninstallArmed(true); return }
+    setUninstallArmed(false)
+    setUninstallBusy(true)
+    void post<{ hints: string[]; found: boolean; key?: string; removedBundle?: string; error?: string }>('/uninstall', { path: uninstallPath.trim() })
+      .then(res => { setUninstallResult(res ?? { hints: [], found: false, error: '数据服务不可达' }) })
+      .finally(() => { setUninstallBusy(false) })
+  }
 
   // 首次会话提示词:任意 AI 开发工具(ClaudeCode/Codex/OpenCode/dsh)加载生成目录后的第一句话。
   const firstPrompt = ok && result !== null ? [
@@ -138,6 +153,41 @@ export function ScaffoldPage(): ReactNode {
             </div>
           </div>
         )}
+
+        <div className="tll-card" style={{ padding: '16px 20px', marginTop: 16 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 650, marginBottom: 4 }}>卸载已生成的项目</div>
+          <div style={{ fontSize: 12, color: 'var(--tll-ink3)', marginBottom: 10 }}>
+            输入生成项目的路径,把它从当前 profile 的登记中移除(面板随之消失)。只动登记,不删目录——你的代码与数据保留。
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 12, alignItems: 'center' }}>
+            <span style={{ fontSize: 12.5, color: 'var(--tll-ink2)' }}>项目路径</span>
+            <input
+              className="tll-search" style={{ width: '100%' }}
+              placeholder="/Volumes/NVME980/shuge-harness/dsh-writer-desk"
+              value={uninstallPath} onChange={e => { setUninstallPath(e.target.value); setUninstallResult(null) }}
+            />
+            <button
+              className="tll-ai-btn" style={{ opacity: uninstallBusy || uninstallPath.trim() === '' ? 0.55 : 1 }}
+              onClick={doUninstall}
+            >{uninstallBusy ? '卸载中…' : uninstallArmed ? '确认卸载' : '卸载'}</button>
+          </div>
+          {uninstallResult !== null && (
+            <div style={{ marginTop: 10, fontSize: 12.5, lineHeight: 1.8, color: uninstallResult.error ? 'var(--tll-down)' : 'var(--tll-ink)' }}>
+              {uninstallResult.error
+                ? <>✗ {uninstallResult.error}</>
+                : (
+                    <>
+                      {uninstallResult.found
+                        ? <div>✓ 已卸载登记:{uninstallResult.key}{uninstallResult.removedBundle ? ' + bundles 条目' : ''}</div>
+                        : <div>该路径未登记在当前 profile 中,无需卸载。</div>}
+                      <div style={{ color: 'var(--tll-ink2)', marginTop: 4 }}>
+                        {uninstallResult.hints.map((h, i) => <div key={i}>{h.startsWith('rm -rf') ? <code style={{ color: 'var(--tll-ink)' }}>{h}</code> : h}</div>)}
+                      </div>
+                    </>
+                  )}
+            </div>
+          )}
+        </div>
       </div>
       <div style={{ display: 'none' }}><IconCopy size={12} /></div>
     </div>

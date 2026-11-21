@@ -5,12 +5,14 @@
  * Host 半区仅承载该能力的路由与 agent 工具;数据服务由生成出的项目各自提供。
  */
 import { scaffoldProject } from './service/scaffold.mjs'
+import { uninstallByPath } from './service/uninstall.mjs'
 
 const PREFIX = '/wbt-api'
 
 const routes = {
   'GET /health': () => ({ ok: true, service: 'workbench-template', time: new Date().toISOString() }),
   'POST /scaffold': scaffoldProject,
+  'POST /uninstall': uninstallByPath,
 }
 
 /** dsh 插件入口。 */
@@ -74,6 +76,16 @@ export function apply(ctx) {
       output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
       async execute(args) { return JSON.stringify(await scaffoldProject(args)) },
     })
+    const uninstallTool = defineTool({
+      name: 'wbt_uninstall',
+      description: '把某个由本生成器创建、已登记进当前 profile 的项目从 profile 中卸载(移除依赖与 bundles 登记)。不会删除项目目录本身——代码与数据保留,由用户自行决定是否删除。',
+      parameters: {
+        path: { type: 'string', required: true, description: '生成项目的目录绝对路径' },
+      },
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      async execute(args) { return JSON.stringify(await uninstallByPath(args)) },
+    })
     ctx.effect(() => ctx.tools.register(tool), 'workbench-template: tools')
+    ctx.effect(() => ctx.tools.register(uninstallTool), 'workbench-template: uninstall tool')
   }
 }
