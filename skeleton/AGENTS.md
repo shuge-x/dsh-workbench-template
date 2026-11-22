@@ -26,12 +26,15 @@ src/pages/          ★ 你的业务页面(主代码,长期演进;首页起步�
 src/examples/       示例区:9 个范式页(教学代码)。源码常驻供 AI 阅读,但默认不注册进侧栏
                     ——要看渲染效果把 src/client.tsx 的 SHOW_EXAMPLES 置 true;可整体删除
 docs/EXAMPLES.md    范式索引 + 红线映射表(AI 开发先读它)
+docs/official/      官方规范随行:dsh-doc 技能全文(SKILL.md 入口 + references/ 17 篇 + templates/)。
+                    生成时按本机 dsh 版本对齐抓取;抓不到时落骨架快照——以 VERSION.txt 标注的
+                    来源与日期为准,它可能过期,机制疑问以运行中的 dsh 实际行为为最终事实
 scripts/guard.mjs   门禁:红线机器检查,发布前必过
 ```
 
 ## 必读顺序
 
-AI 接手本项目:① 读本文件(行为红线)→ ② 读 `DESIGN.md`(视觉契约与 Do/Don't)→ ③ 读 `docs/EXAMPLES.md`(范式索引)→ ④ 按 src/examples/ 源码抄范式。写 UI 前必读 DESIGN.md 的 Do/Don't。
+AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;references/ 17 篇按任务查——插件机制、UI 规则、工具设计、版本升级都在里面,**优先级高于本文件**:这里只是官方规则的投影与项目化)→ ② 读本文件(行为红线与默认策略)→ ③ 读 `DESIGN.md`(视觉契约与 Do/Don't)→ ④ 读 `docs/EXAMPLES.md`(范式索引)→ ⑤ 按 src/examples/ 源码抄范式。写 UI 前必读 DESIGN.md 的 Do/Don't。
 
 ## 红线(违反 = guard 阻断或运行时崩)
 

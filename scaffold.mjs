@@ -4,7 +4,7 @@
  * 核心逻辑在 service/scaffold.mjs(与 HTTP 路由、agent 工具共用)。
  *
  * 用法:
- *   node scaffold.mjs <目标目录> [--name dsh-plugin-xxx] [--id xxx]
+ *   node scaffold.mjs <目标目录> [--name dsh-xxx] [--id xxx]
  */
 import { scaffoldProject } from './service/scaffold.mjs'
 
@@ -19,7 +19,7 @@ const opt = (flag, dflt) => {
   return i >= 0 ? args[i + 1] : dflt
 }
 
-const out = scaffoldProject({
+const out = await scaffoldProject({
   target,
   name: opt('--name', 'dsh-myworkbench'),
   id: opt('--id', 'myworkbench'),
@@ -31,6 +31,7 @@ if (out.error !== undefined) {
 }
 console.log(`✓ 已生成 ${out.target}`)
 console.log(`  包名:${out.name}   插件 id:${out.id}`)
+console.log(`  官方规范:${out.officialDocs}`)
 console.log('下一步:')
 for (const step of out.nextSteps) console.log('  ' + step)
 console.log('详细经验见 docs/dsh-plugin-playbook.md')

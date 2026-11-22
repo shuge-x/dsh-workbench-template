@@ -5,6 +5,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { fetchOfficialDocs } from './fetch-official.mjs'
 
 /** 骨架目录(包根下的 skeleton/)。 */
 export const SKELETON_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'skeleton')
@@ -45,9 +46,9 @@ function listFiles(dir, base = dir, acc = []) {
 }
 
 /**
- * 生成工作台项目。返回 { ok, target, name, id, port, files, nextSteps } 或 { error }。
+ * 生成工作台项目。返回 { ok, target, name, id, officialDocs, files, nextSteps } 或 { error }。
  */
-export function scaffoldProject({ target, name, id } = {}) {
+export async function scaffoldProject({ target, name, id } = {}) {
   const checked = validateScaffoldArgs({ target, name, id })
   if (checked.error !== undefined) return { error: checked.error }
   const { target: t, name: n, id: i } = checked
@@ -72,16 +73,26 @@ export function scaffoldProject({ target, name, id } = {}) {
   ])
   replaceIn(join(t, 'src', 'client.tsx'), [['dsh-myworkbench', n], ['my-workbench', i]])
 
+  // 官方规范随行:骨架已内置快照(docs/official/dsh-doc/,随上面 cpSync 一起落地),
+  // 这里尝试从 GitHub 升级到与本机 dsh 版本对齐的官方版;失败保留快照(VERSION.txt 如实标注)
+  const logs = []
+  const officialDocs = await fetchOfficialDocs(join(t, 'docs', 'official', 'dsh-doc'), {
+    log: m => logs.push(m),
+  })
+
   const files = listFiles(t).filter(f => f !== 'node_modules')
   return {
     ok: true,
     target: t,
     name: n,
     id: i,
+    officialDocs: officialDocs.ok
+      ? `fetched ${officialDocs.ref}(${officialDocs.files} 个文件)`
+      : `snapshot(抓取未升级:${officialDocs.reason})`,
     files,
     nextSteps: [
       `cd ${t}`,
-      '把目录交给 AI 开发工具(ClaudeCode/Codex/OpenCode),按 AGENTS.md 开始开发(手册与范式已就绪)',
+      '把目录交给 AI 开发工具(ClaudeCode/Codex/OpenCode),按 AGENTS.md 开始开发(官方规范已随行于 docs/official/,必读第一位)',
       './start.sh   # 可选:在 dsh 里预览运行(自动构建/登记/启动)',
     ],
   }

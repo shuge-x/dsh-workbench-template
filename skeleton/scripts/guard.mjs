@@ -48,6 +48,13 @@ if (existsSync('src/examples')) {
   if (failures === 0) ok('主代码未耦合示例区(边界)')
 }
 
+// 官方规范随行:AGENTS.md 必读第一位,被删了 AI 就失去地面真值
+if (existsSync(join('docs', 'official', 'dsh-doc', 'SKILL.md'))) {
+  ok('官方规范随行在位(docs/official/dsh-doc/)')
+} else {
+  fail('docs/official/dsh-doc/SKILL.md 缺失——官方规范随行被删(AGENTS.md 必读第一位)')
+}
+
 // 静态引用检查:esbuild 不查标识符引用(坑 #15:`Pill is not defined` 构建全绿、渲染即崩)
 const tscBin = join('node_modules', '.bin', 'tsc')
 if (existsSync(tscBin)) {
