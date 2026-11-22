@@ -11,7 +11,7 @@
 import { regionSummary, latest } from './service/api.mjs'
 import { getDb } from './service/db.mjs'
 import { streamChat } from './service/ai.mjs'
-import { registerSessionStats, SESSION_STATS_KEY } from './service/session-stats.mjs'
+import { registerSessionStats, sessionStatsProbe, SESSION_STATS_KEY } from './service/session-stats.mjs'
 import Schema from '@deepseek-ai/schemastery'
 
 /**
@@ -108,9 +108,9 @@ const routes = {
 
   console.log('[wb-data] /wb-api 路由已挂载(同源)')
 
-  // 会话联动固件:session projection + 探针工具(机制详见 service/session-stats.mjs 头注释;
+  // 会话联动固件:session projection(机制详见 service/session-stats.mjs 头注释;
   // 客户端读取示范在 src/examples/SessionLinkageTab.tsx,SHOW_EXAMPLES 开启后右侧栏可见)
-  await registerSessionStats(ctx, defineTool)
+  const statsHandle = await registerSessionStats(ctx)
   console.log(`[wb-data] 会话统计投影已注册(${SESSION_STATS_KEY},fork 守卫在位)`)
 
   // agent 工具。
@@ -118,10 +118,10 @@ const routes = {
     console.warn('[wb-data] @deepseek-ai/dsh-tools 不可解析,跳过 agent 工具注册(独立运行模式)')
     return
   }
-  const tools = wbTools()
+  const tools = [...wbTools(), sessionStatsProbe(defineTool, statsHandle)]
   ctx.effect(() => {
     const disposers = tools.map(t => ctx.tools.register(t))
-    console.log(`[wb-data] 已注册 ${tools.length} 个 agent 工具`)
+    console.log(`[wb-data] 已注册 ${tools.length} 个 agent 工具(含会话统计探针 wb_session_stats)`)
     return () => { for (const d of disposers) d() }
   }, 'myworkbench: tools')
 }

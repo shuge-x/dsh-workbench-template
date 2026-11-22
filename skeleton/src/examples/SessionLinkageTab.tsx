@@ -16,8 +16,9 @@ import type { ReactNode } from 'react'
 import { WbIcon } from '../icons'
 import type { DshClientContext, PaneTabProps } from '../shim'
 
-const TAB_ID = 'wb-session-linkage'
-const TAB_KIND = 'my-workbench/session-linkage' // my-workbench 由 scaffold 改名为插件 id
+// 身份必须按包名派生:examples 文件不在 scaffold 改名清单里,scaffold 改不了这里的字面量——
+// 硬编码会让两个工作台插件(都开 SHOW_EXAMPLES)在 keyed 槽上撞 key(坑 #16 同类)。
+// pkg 由 client.tsx 传入(那里的 'dsh-myworkbench' 会被 scaffold 改成真包名)。
 const NS = 'wbSessionLinkage'
 // 与 service/session-stats.mjs 的 SESSION_STATS_KEY 配对(两端各写字面量,保持一致即可)
 const STATS_KEY = 'wbSessionStats'
@@ -92,8 +93,10 @@ export function LinkageTitle(props: { t?: (key: string) => string }): ReactNode 
   return <><WbIcon glyph="new-chat-outline" size={14} /> {t('title')}</>
 }
 
-/** 会话联动 tab 的完整注册(由 attachExamples 调用,随 SHOW_EXAMPLES 开关同生共死)。 */
-export function attachSessionLinkageTab(ctx: DshClientContext): void {
+/** 会话联动 tab 的完整注册(由 attachExamples 传入包名调用,随 SHOW_EXAMPLES 开关同生共死)。 */
+export function attachSessionLinkageTab(ctx: DshClientContext, pkg: string): void {
+  const TAB_ID = `${pkg}-linkage`
+  const TAB_KIND = `${pkg}/session-linkage`
   ctx.effect(() => ctx.locale.register(NS, dict), 'wb-examples: linkage locale')
   const t = ctx.locale.bind(NS)
 

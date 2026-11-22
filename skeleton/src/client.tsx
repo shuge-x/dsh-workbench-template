@@ -64,7 +64,7 @@ export function apply(ctx: DshClientContext): void {
     ))
   }
 
-  if (SHOW_EXAMPLES) attachExamples(ctx) // ← 示例区唯一调用;彻底删除时删本行与上面的 import(见 docs/EXAMPLES.md)
+  if (SHOW_EXAMPLES) attachExamples(ctx, 'dsh-myworkbench') // ← 示例区唯一调用;包名字面量会被 scaffold 改成真包名(槽位 key 按包名派生,防多插件撞 key)
 
   // 插件行配置页:插件管理页里本插件行出现「配置」控件;保存写回 profile patch,HMR 热重载生效。
   // 键 = 包名#row id(row id 见 cordis.patch.yml;官方描述为 `<package name>#<row id>`,

@@ -8,13 +8,23 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import { join } from 'node:path'
 
+/** 递归收集目录下全部文件(Host 半区扫描必须递归:service 子目录里的代码同样受检)。 */
+function walkFiles(dir, acc = []) {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name)
+    if (statSync(p).isDirectory()) walkFiles(p, acc)
+    else acc.push(p)
+  }
+  return acc
+}
+
 let failures = 0
 const fail = (msg) => { console.error(`[guard] ✗ ${msg}`); failures += 1 }
 const ok = (msg) => console.log(`[guard] ✓ ${msg}`)
 const warn = (msg) => console.warn(`[guard] ⚠ ${msg}(不阻断,但建议修)`)
 
 // 坑 #1
-const hostFiles = ['index.js', ...readdirSync('service').map(f => join('service', f))]
+const hostFiles = ['index.js', ...walkFiles('service')]
 for (const f of hostFiles) {
   if (statSync(f).isFile() && readFileSync(f, 'utf8').includes('required: false')) {
     fail(`${f} 含 required: false(坑 #1:可选参数整个省略 required 字段;真实错误:JsonSchemaError: parameters.store.required must be true when present)`)
@@ -112,8 +122,8 @@ if (existsSync('src')) {
       else projFiles.push(p)
     }
   }
-  for (const f of ['index.js', ...readdirSync('service').map(x => join('service', x))]) {
-    if (statSync(f).isFile()) check(f)
+  for (const f of ['index.js', ...walkFiles('service')]) {
+    if (/\.(mjs|js|ts|tsx)$/.test(f)) check(f)
   }
   if (existsSync('src')) {
     const scan = (dir) => {
@@ -168,7 +178,7 @@ try {
 }
 
 // 语法检查:index.js 与 service/*.mjs 是纯 JS——TS 语法(type 注解)混入会在宿主装载时才炸(构建不查它们)
-const jsFiles = ['index.js', ...readdirSync('service').map(f => join('service', f)).filter(f => f.endsWith('.mjs'))]
+const jsFiles = ['index.js', ...walkFiles('service').filter(f => f.endsWith('.mjs'))]
 for (const f of jsFiles) {
   try {
     execSync(`node --check ${JSON.stringify(f)}`, { stdio: 'pipe' })

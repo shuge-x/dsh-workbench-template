@@ -86,30 +86,34 @@ export function sessionStatsProjection() {
 }
 
 /**
- * 注册会话统计投影 + 探针工具(wb_session_stats)。
- * 探针让 agent 直接断言统计数值——"数字偏大但看着合理"这类静默错肉眼看不出来,
- * 它抓的就是 §11 projection 行那个静默坑。defineTool 缺省(独立运行)时只注册投影。
- * 返回投影 handle(stateOf(session) 供其他 Host 代码读状态)。
+ * 注册会话统计投影,返回投影 handle(stateOf(session) 供其他 Host 代码读状态)。
+ * 投影注册随插件 fiber 生命周期;工具侧用 sessionStatsProbe(defineTool, handle)
+ * 组装探针,由调用方并入统一的 ctx.effect + disposer 注册纪律(红线 #7)。
  */
-export async function registerSessionStats(ctx, defineTool) {
-  const handle = await ctx.sessionProjections.register(sessionStatsProjection())
-  if (defineTool !== undefined) {
-    ctx.tools.register(defineTool({
-      name: 'wb_session_stats',
-      description: 'Read this workbench session-stats projection for the CURRENT session (turns/steps/tool calls/messages). Probe tool: assert the projection folds correctly — numbers silently too large usually mean a missing fork guard.',
-      parameters: { type: 'object', additionalProperties: false, properties: {} },
-      output: {
-        schema: { type: 'object', additionalProperties: true },
-        render: (_args, value) => [{ type: 'text', text: JSON.stringify(value, null, 2) }],
-      },
-      isConcurrencySafe: () => true,
-      async execute(_args, exec) {
-        const session = exec?.agent?.session
-        if (session === undefined) return { error: 'no-session(探针只在会话内可读;宿主直测无会话上下文)' }
-        const state = handle.stateOf(session)
-        return { sessionId: session.id, ...state }
-      },
-    }))
-  }
-  return handle
+export async function registerSessionStats(ctx) {
+  return ctx.sessionProjections.register(sessionStatsProjection())
+}
+
+/**
+ * 探针工具 wb_session_stats:让 agent 直接断言统计数值——"数字偏大但看着合理"
+ * 这类静默错肉眼看不出来,它抓的就是 §11 projection 行那个静默坑。
+ * 返回 defineTool 包装后的工具定义,调用方并入工具数组的统一注册/清理。
+ */
+export function sessionStatsProbe(defineTool, handle) {
+  return defineTool({
+    name: 'wb_session_stats',
+    description: 'Read this workbench session-stats projection for the CURRENT session (turns/steps/tool calls/messages). Probe tool: assert the projection folds correctly — numbers silently too large usually mean a missing fork guard.',
+    parameters: { type: 'object', additionalProperties: false, properties: {} },
+    output: {
+      schema: { type: 'object', additionalProperties: true },
+      render: (_args, value) => [{ type: 'text', text: JSON.stringify(value, null, 2) }],
+    },
+    isConcurrencySafe: () => true,
+    async execute(_args, exec) {
+      const session = exec?.agent?.session
+      if (session === undefined) return { error: 'no-session(探针只在会话内可读;宿主直测无会话上下文)' }
+      const state = handle.stateOf(session)
+      return { sessionId: session.id, ...state }
+    },
+  })
 }

@@ -36,8 +36,11 @@ export const EXAMPLES_META = {
   order: -4,
 }
 
-/** 示例区唯一入口:注入示例样式 + 注册主面板与侧边栏。删除示例时连 import 一起删(见 EXAMPLES.md)。 */
-export function attachExamples(ctx: DshClientContext): void {
+/** 示例区唯一入口:注入示例样式 + 注册主面板与侧边栏。删除示例时连 import 一起删(见 EXAMPLES.md)。
+ *  pkg 由 client.tsx 传入(其字面量会被 scaffold 改成真包名)——示例槽位 key 按包名派生,
+ *  防止多个工作台插件同时开示例时撞 keyed 槽(坑 #16 同类)。 */
+export function attachExamples(ctx: DshClientContext, pkg = 'dsh-myworkbench'): void {
+  const panelId = `${pkg}-examples`
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.wbExamples = 'examples'
@@ -46,11 +49,11 @@ export function attachExamples(ctx: DshClientContext): void {
     return () => { style.remove() }
   }, 'wb-examples: styles')
 
-  attachSessionLinkageTab(ctx) // 会话联动 tab(右侧栏;红线 #10:guide 必给)
+  attachSessionLinkageTab(ctx, pkg) // 会话联动 tab(右侧栏;红线 #10:guide 必给)
 
-  ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: EXAMPLES_META.panelId }, ExamplePanel))
+  ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: panelId }, ExamplePanel))
   ctx.slots.inject('sidebar.panellist', () => ctx.slots.register(
-    { name: 'sidebar.panellist', id: EXAMPLES_META.panelId, order: EXAMPLES_META.order, label: EXAMPLES_META.title },
+    { name: 'sidebar.panellist', id: panelId, order: EXAMPLES_META.order, label: EXAMPLES_META.title },
     (props: { size?: number }) => <WbIcon glyph="project-add-outline" size={props.size ?? 16} />,
   ))
 }
