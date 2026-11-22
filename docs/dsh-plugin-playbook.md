@@ -9,13 +9,19 @@
 
 ---
 
-## 1. 架构决策:三种路线怎么选
+## 1. 架构决策:四种路线怎么选
 
 | 路线 | 适合 | 代价 |
 |---|---|---|
-| **dsh 插件**(本手册) | 垂直产品/工作台,聊天+BI+工具一体 | 耦合插件 API(锁版本可控);client 插件文档较薄,需读源码 |
+| **dsh 插件**(本手册/脚手架) | 垂直产品/工作台,聊天+BI+工具一体;要长期演进与治理资产(guard/设计库/手册) | 耦合插件 API(锁版本可控);client 插件文档较薄,需读源码 |
+| **官方 Creator 模式**(id: cordis) | 装饰级小件:面板小卡、单页小工具,一句话一次性交付,不打算长期演进 | 一次性线:无治理资产、无门禁、规模天花板低;产出沙盒单目录、insert-only,session 路线 B 例外(见下) |
+| **会话路线 B**(Creator 的 session 路径) | 工作台级 + 会话联动一体的应用(video-workbench 已实证:1842 行 host + ffmpeg 导出 + 会话联动面板) | 无模板资产起步,规范靠 AI 自觉;适合原型验证,成熟后可回迁模板体系 |
 | Fork dsh 源码 | ❌ 基本总是错的 | dsh 迭代快(developer preview),跟不完 |
 | Runtime agent(SDK/ACP 驱动自建前端) | 多租户 SaaS、深度嵌入自有系统、UI 要彻底自主 | 整个壳(聊天流/会话/终端/文件面板/审批)自建,以月计 |
+
+**选型判据**(按序问):要长期演进/要门禁与设计库吗 → 模板脚手架;只是装饰级小件、
+一句话交付即弃 → Creator 模式;要跟会话深度联动且规模到工作台级 → 路线 B 起步,
+长大回迁模板(把会话联动面板照 examples 范式落进骨架)。
 
 **关键判断依据**:dsh 官方 Web 壳已经提供聊天、会话管理、工作区文件、终端、浏览器、审批、插件管理——占产品 UI 的 80%。插件只需做自己那 20%(品牌 + 导航 + 业务页面 + 数据工具)。
 
@@ -236,6 +242,7 @@ export function apply(ctx) {
 | 13 | 并发 AI 会话共享同一工作目录时,曾出现单文件静默损坏(冒号被批量替换),提交后才在构建中暴露 | 多会话/多代理**不要共享同一工作目录**;git 提交前跑一次构建作门禁(esbuild 语法检查能抓住这类损坏) |
 | 14 | 页面组件**丢失 `.tll-page` 根容器** → reset(`.tll-page :where(button)`)与页面级样式全部落空,dsh 外壳的按钮默认描边/内边距漏入,tab 变"裸盒子"。曾因重写页面组件(接真数据)时丢掉包装层,带病运行多个版本 | 每个主面板组件根节点**必须是 `<div className="tll-page">`**(样式作用域根);重写页面时先保住根容器;断言:`document.querySelectorAll('.tll-page').length === 1` |
 | 15 | **用了没 import 的标识符**(`Pill is not defined`)——esbuild 不做引用检查,构建全绿但页面渲染即崩,整面板被卸载 | 新页面写完立刻逐页签 DOM 断言(浏览器实测);或引入 `tsc --noEmit` 做静态引用检查;这是 #17 类错误的又一变体 |
+| 16 | **多插件共存互拆 sprite**:图标 sprite 的幂等守卫若用全局属性名(不带包名),两个工作台插件共存时后挂者跳过挂载、先卸载者的清理把共享 sprite 一起拆掉——后者图标全灭且无报错 | 文档级挂载物(sprite 等)一律**按包名命名空间化**:`data-<前缀>-icon-sprite-<包名>`,守卫只认自己的属性、卸载只拆自己挂的;theme.ts 的 PKG 常量由 scaffold 自动改名 |
 
 ---
 
@@ -284,6 +291,8 @@ practices.md「插件不得 require/load Harness Client 包」才反转成 vendo
 
 **本仓库的 `skeleton/` 是唯一源**:空白起步首页 + 9 页范式示例(「示例·工作台」面板,`SHOW_EXAMPLES` 开关)+
 AGENTS.md(AI 手册)+ docs/EXAMPLES.md(范式索引与红线)+ guard 五件套(红线/边界/镜像/tsc/渲染冒烟)+ start.sh。
+**代际声明**:dsh-workbench-sample(v0.4.0-sample,tll- 代)冻结为历史教学参照,其代码含已被官方禁用的
+旧机制(import Harness Client 图标包)——不得作为现行范式抄;机制与范式以 skeleton/ 为准(README 同款声明)。
 三种起跑方式:
 
 ```sh
@@ -349,7 +358,15 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 2. 放开本仓库 `engines.dsh` 范围 → 跑完整验证工作流(§8:构建 / 页面 DOM 断言 / 工具直测 / agent 闭环)
 3. diff 官方包的插槽与工具用法:`ui-plugin-manager`、`ui-schedule`、`plugin-market-bundle`(§5 列出)
 4. 变化写入下表台账 + 修订手册与 skeleton
-5. 下游工作台按台账各自升级
+5. 下游工作台按台账各自升级;体系资产两条命令跟进:`npm run vendor-icons`(重提取官方图形)+
+   `npm run sync-official`(刷官方规范快照),再重新生成一项目跑端到端验收
+
+**调研台账**(平台事实核实,未构成变化也记录):
+- **官方 storage service**(2026-11-22,对 dsh-v0.2.3-alpha.1 文档):practices.md 提到
+  "keep plugin-owned data in a storage service found through inspection"——**存在但无公开文档面**
+  (须经 inspection 发现,属官方实验面,同段明示 Session 对实验包记录只做 best-effort 迁移)。
+  结论:骨架自持 SQLite + 数据目录标准(WB_DATA_DIR → DSH_PROFILE_DIR/data → ~/.dsh/data)不与之冲突,
+  继续自持;待官方把 storage service 文档化为公开面后再评估迁移(届时按裁决程序:平台事实赢)。
 
 | dsh 版本 | 日期 | 变化 | 样板动作 |
 |---|---|---|---|

@@ -36,6 +36,10 @@ scripts/guard.mjs   门禁:红线机器检查,发布前必过
 
 AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;references/ 17 篇按任务查——插件机制、UI 规则、工具设计、版本升级都在里面,**优先级高于本文件**:这里只是官方规则的投影与项目化)→ ② 读本文件(行为红线与默认策略)→ ③ 读 `DESIGN.md`(视觉契约与 Do/Don't)→ ④ 读 `docs/EXAMPLES.md`(范式索引)→ ⑤ 按 src/examples/ 源码抄范式。写 UI 前必读 DESIGN.md 的 Do/Don't。
 
+**规范源分层**:在 dsh 会话内开发时,以会话原生的 dsh-doc skill(随宿主版本,最新)为最优先;
+`docs/official/` 随行快照服务**外部**工具(ClaudeCode/Codex 等),可能滞后于你的会话——
+两边说法不一致时,回到裁决程序第 1 步:核实运行中 dsh 的实际行为定夺,不猜任何一方。
+
 ## 规则层级与裁决程序
 
 项目规则分三层;冲突时按下表定序,不靠临场感觉:

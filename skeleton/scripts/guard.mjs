@@ -11,6 +11,7 @@ import { join } from 'node:path'
 let failures = 0
 const fail = (msg) => { console.error(`[guard] ✗ ${msg}`); failures += 1 }
 const ok = (msg) => console.log(`[guard] ✓ ${msg}`)
+const warn = (msg) => console.warn(`[guard] ⚠ ${msg}(不阻断,但建议修)`)
 
 // 坑 #1
 const hostFiles = ['index.js', ...readdirSync('service').map(f => join('service', f))]
@@ -70,6 +71,16 @@ if (existsSync('src')) {
   const hits = walkSrc('src', [])
   for (const p of hits) fail(`${p} import 了 Harness Client 包(官方 practices.md 禁令;素材 vendored、类型 shim 自持)`)
   if (hits.length === 0) ok('src/ 无 Harness Client 包 import(practices.md 禁令)')
+}
+
+// token 纪律(warn 级):业务页面裸写 hex 颜色 → 设计变体(terminal/paper/商店绿)换不动它,
+// AGENTS.md 验证清单的明暗双主题实测会在这里漏。token 定义处与示例区不查(教学代码可示范配色)
+if (existsSync('src/pages')) {
+  const HEX = /(?<!&)#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b/g
+  for (const f of readdirSync('src/pages').filter(f => f.endsWith('.tsx'))) {
+    const found = readFileSync(join('src/pages', f), 'utf8').match(HEX)
+    if (found) warn(`${f} 裸写颜色 ${[...new Set(found)].join(' ')}——改用 var(--wb-*) token,否则变体换肤与明暗实测会漏`)
+  }
 }
 
 // 静态引用检查:esbuild 不查标识符引用(坑 #15:`Pill is not defined` 构建全绿、渲染即崩)
