@@ -93,26 +93,33 @@ if (existsSync('src')) {
 }
 
 // session projection 的 fork 守卫(坑:fork 会话把父会话历史算成自己的,静默偏大不报错):
-// 注册了 projection 的文件必须含 inheritedEventCount 守卫(init 存下 + apply 首行短路)
+// 注册了 projection 的文件必须含 inheritedEventCount 守卫(init 存下 + apply 首行短路)。
+// projection 经 ctx.sessionProjections 注册,天然发生在 **Host 半区**(index.js/service)——
+// 两半都扫,只扫 src/ 会漏掉真正的注册点(评审实测盲区)
 {
   const projFiles = []
-  const scan = (dir) => {
-    for (const name of readdirSync(dir)) {
-      const p = join(dir, name)
-      if (statSync(p).isDirectory()) scan(p)
-      else if (/\.(tsx?|m?js)$/.test(name)) {
-        const s = readFileSync(p, 'utf8')
-        if (/sessionProjections\s*\.\s*register/.test(s)) {
-          if (!/inheritedEventCount/.test(s)) fail(`${p} 注册了 session projection 但没有 inheritedEventCount 守卫(缺了会静默错:fork 会话把父历史算成自己的)`)
-          else projFiles.push(p)
-        }
-      }
+  const check = (p) => {
+    const s = readFileSync(p, 'utf8')
+    if (/sessionProjections\s*\.\s*register/.test(s)) {
+      if (!/inheritedEventCount/.test(s)) fail(`${p} 注册了 session projection 但没有 inheritedEventCount 守卫(缺了会静默错:fork 会话把父历史算成自己的)`)
+      else projFiles.push(p)
     }
   }
-  if (existsSync('src')) {
-    scan('src')
-    if (projFiles.length === 0) ok('未使用 session projection(如引入:init 必须存 inheritedEventCount,apply 首行按 seq 短路)')
+  for (const f of ['index.js', ...readdirSync('service').map(x => join('service', x))]) {
+    if (statSync(f).isFile()) check(f)
   }
+  if (existsSync('src')) {
+    const scan = (dir) => {
+      for (const name of readdirSync(dir)) {
+        const p = join(dir, name)
+        if (statSync(p).isDirectory()) scan(p)
+        else if (/\.(tsx?|m?js)$/.test(name)) check(p)
+      }
+    }
+    scan('src')
+  }
+  if (projFiles.length === 0) ok('未使用 session projection(如引入:init 必须存 inheritedEventCount,apply 首行按 seq 短路)')
+  else ok(`session projection fork 守卫在位(${projFiles.length} 处)`)
 }
 
 // token 纪律(warn 级):业务页面裸写 hex 颜色 → 设计变体(terminal/paper/商店绿)换不动它,
