@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Workbench",
+    "description": "A dsh web workbench plugin: main panel with its own sidebar entry, backed by a same-origin HTTP data service and optional agent tools."
+  }
+}

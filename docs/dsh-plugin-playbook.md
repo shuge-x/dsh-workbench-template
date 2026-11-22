@@ -85,6 +85,7 @@ my-workbench/
 
 ```sh
 # 开发:把插件目录链入 profile(首次会以 base 模板建 profile,需再重置为 web 模板)
+cd /path/to/my-workbench && npm install   # ★ 先装依赖:link 安装时 Node 按插件真实路径向上找 node_modules,profile 的不在路上(坑 #17)
 npx @deepseek-ai/dsh plugin --profile workbench add /path/to/my-workbench
 npx @deepseek-ai/dsh --profile workbench --from-default-profile web   # 重置为 web 模板(会清依赖,再 add 一次)
 npx @deepseek-ai/dsh plugin --profile workbench add /path/to/my-workbench
@@ -120,6 +121,15 @@ await build({
 `react`、`react/jsx-runtime`、`react-dom`、`react-dom/client`、`@deepseek-ai/cordis`、`zod`、
 `@tanstack/react-virtual`、`@deepseek-ai/dsh-client-store`、`@deepseek-ai/dsh-client-ui-slots`、
 `@deepseek-ai/dsh-client-ui-primitives`、`@deepseek-ai/dsh-client-ui-dockkit`。
+
+### `dsh.client.inject` 的确切语义
+
+它只列**包名依赖边**,仅作 preflight 展示与 HMR diff 信息,**不排序激活**——激活顺序由
+Cordis fiber 的 service `inject` 等待决定(官方 client/AGENTS.md:"informational only … they
+do not sequence entry activation or apply order")。所以:插件对象里的
+`inject: ['slots','locale']` 才是"等这些服务就位"的声明;`dsh.client.inject` 是"等这些包先到"。
+**纪律**:将来引入任何 `@deepseek-ai/dsh-client-*` 实现(非 import type)时必须加进
+`dsh.client.inject`;只用类型则不需要。骨架当前零 client 包运行时依赖,故不声明。
 其余 dsh 包即使出现在 `dsh.client.inject` 也只是到达顺序约束;**只用类型不 import 实现**的话,运行时外部依赖可以只有 react 两项(本项目实测如此)。
 
 > 包资源(asset)路由 `/plugins/<pkg>/assets/*` 只支持图片(svg/png/webp/jpg)。JSON/GeoJSON 一类数据直接打进 bundle(esbuild 原生 import JSON)。
@@ -243,6 +253,9 @@ export function apply(ctx) {
 | 14 | 页面组件**丢失 `.tll-page` 根容器** → reset(`.tll-page :where(button)`)与页面级样式全部落空,dsh 外壳的按钮默认描边/内边距漏入,tab 变"裸盒子"。曾因重写页面组件(接真数据)时丢掉包装层,带病运行多个版本 | 每个主面板组件根节点**必须是 `<div className="tll-page">`**(样式作用域根);重写页面时先保住根容器;断言:`document.querySelectorAll('.tll-page').length === 1` |
 | 15 | **用了没 import 的标识符**(`Pill is not defined`)——esbuild 不做引用检查,构建全绿但页面渲染即崩,整面板被卸载 | 新页面写完立刻逐页签 DOM 断言(浏览器实测);或引入 `tsc --noEmit` 做静态引用检查;这是 #17 类错误的又一变体 |
 | 16 | **多插件共存互拆 sprite**:图标 sprite 的幂等守卫若用全局属性名(不带包名),两个工作台插件共存时后挂者跳过挂载、先卸载者的清理把共享 sprite 一起拆掉——后者图标全灭且无报错 | 文档级挂载物(sprite 等)一律**按包名命名空间化**:`data-<前缀>-icon-sprite-<包名>`,守卫只认自己的属性、卸载只拆自己挂的;theme.ts 的 PKG 常量由 scaffold 自动改名 |
+| 17 | **本地 link 安装的依赖解析绕过 profile** → `Cannot find package 'x' imported from /path/to/plugin/index.js`(pnpm 步骤成功,但插件激活失败 `1 entry did not activate`) | `install_bundle` 对本地目录做 `link:` 安装,Node 按 ESM 的 **realpath** 向上找 `node_modules`,profile 的不在路上(同机实测:零依赖 link 插件 ✅ / registry 安装带依赖 ✅ / link 安装带依赖 ❌)。**先在插件目录 `npm install`**(start.sh 已自动做);registry 安装无此问题(pnpm 平铺进 profile)。`@deepseek-ai/dsh-tools` 在 npm 上(0.0.1-rc.1)远低于运行时,勿装成真实依赖——动态 import + try/catch(坑 #9)是正解 |
+| 18 | `defineTool` 可选参数写 `required: false` → 真实错误文案是 `JsonSchemaError: parameters.store.required must be true when present` | 可选参数**整个省略** `required` 字段;guard 已检查并带上这句原文,新增工具后 grep 一次 |
+| 19 | 生成的插件在 Plugins 页**没有标题/描述/图标**(缺 `locale/*.json` 的 `meta.title`/`meta.description` 与 `icon.svg`) | `files` 必须含 `locale/*.json` 与 `icon.svg`;`exports` 必须导出 `./locale/*.json` 与 `./icon`(官方 host-plugin.md 清单);缺失时官方回落到 package.json 的 name/description 与默认占位图。图标按 artwork.md 画:36×36 viewBox、字标用路径不用 `<text>`、不画底板 |
 
 ---
 
@@ -256,6 +269,9 @@ export function apply(ctx) {
 6. **明暗双主题**(官方 verification.md 硬项):页面在默认(wb)与暗色变体(terminal)下各过一轮 DOM 断言——wb- tokens 偏离登记册声明了明暗由 DESIGN.md 自担,实测即兑现方式
 7. **UX 评审**(官方要求 expert review):AI 按 DESIGN.md Do/Don't 自查空态/焦点/对比度/禁用态;最终视觉验收归用户
 8. **认证访问**:验证页面一律走日志里带 token 的地址(start.sh 会直接打印),不猎 token、不配免认证
+9. **状态自检**(探针工具):若插件维护了内部状态(计数、缓存、投影),注册一个"读状态"的工具,
+   让 agent 直接断言数值——而不是靠肉眼看 UI。数值偏大但看着合理 = fork 守卫或继承边界出了问题
+   (§11 session projection 行的静默坑就是这么抓出来的)
 
 ---
 
@@ -290,7 +306,7 @@ practices.md「插件不得 require/load Harness Client 包」才反转成 vendo
 ## 9. 新工作台落地清单(脚手架 + AI 手册,勿手抄)
 
 **本仓库的 `skeleton/` 是唯一源**:空白起步首页 + 9 页范式示例(「示例·工作台」面板,`SHOW_EXAMPLES` 开关)+
-AGENTS.md(AI 手册)+ docs/EXAMPLES.md(范式索引与红线)+ guard 五件套(红线/边界/镜像/tsc/渲染冒烟)+ start.sh。
+AGENTS.md(AI 手册)+ docs/EXAMPLES.md(范式索引与红线)+ guard 门禁(红线/边界/元数据/随行/包禁令/token 纪律/tsc/冒烟/语法)+ start.sh。
 **代际声明**:dsh-workbench-sample(v0.4.0-sample,tll- 代)冻结为历史教学参照,其代码含已被官方禁用的
 旧机制(import Harness Client 图标包)——不得作为现行范式抄;机制与范式以 skeleton/ 为准(README 同款声明)。
 三种起跑方式:
@@ -342,6 +358,9 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 | **共享资产镜像**(skeleton 唯一源) | ✅ | `scripts/sync-shared.mjs` + guard 镜像检查 | theme/examples/EXAMPLES.md 由 skeleton 单向同步;guard 逐字节比对,漂移阻断;主代码 import 示例区直接 fail(边界) |
 | **tsc 静态引用检查**(guard 内置) | ✅ | `tsconfig.json` + `src/vendor.d.ts` | esbuild 不查标识符引用(坑 #15);lenient 配置 + 自维护官方包类型面(以浏览器实测契约为准,npm rc.1 的 .d.ts 与运行时不同步) |
 | **插件数据目录**(升级不丢数据) | ✅ | `skeleton/service/db.mjs` | 数据落 `<profile根>/data/<包名>/`(向上找 dsh.profile 标记推导)——GitHub/npm 安装的包目录在 update 时会被整体替换,数据放包内=升级即清空;link 安装回退包内。表结构演进用 PRAGMA user_version + 迁移步骤,勿裸改 CREATE TABLE |
+| **session projection**(会话派生状态) | ⬜ 未验证 | 官方 `packages/interaction/action-cards` | Host 半区 `ctx.sessionProjections.register({key,stateVersion,stateSchema,init,apply,wire})`;`apply` 纯+同步,不关心的事件返回同一引用;`state` 必须 plain JSON;**fork 守卫必须加**:`init` 存下 `inheritedEventCount`,`apply` 首行 `if (event.seq < state.inheritedEventCount) return state`(否则 fork 会话把父历史算成自己的,静默偏大不报错);改折叠语义必须 bump `stateVersion`;客户端 `useProjection(key)` 读成品值不折叠事件;⚠️ `main` 插槽的 `standardProps` **没有** `useProjection`(只有 `sidebar.right.pane.tab` 等有,cordis_inspect 实测) |
+| **右侧栏 tab 类型**(`sidebarRightTabs`) | ⬜ 未验证(工具箱已用,骨架未入示例) | `dsh-ai-toolbox` `src/client.tsx` | `ctx.sidebarRightTabs.register({id,kind,title,guide})` 注册**类型**,再往 `sidebar.right.pane.tab` / `.title` 两个 keyed 槽注册 body/title(key = type 的 id);⚠️ **`guide` 省略 = 不上 guide 页 = 界面打不开**(官方源码注 "Omit to stay off it",注册仍报 success) |
+| **探针工具**(自检模式) | ✅ 建议采用 | 本仓 `wbt_scaffold` / `wbt_uninstall` | 给插件注册一个"读内部状态"的工具,让 agent 直接断言数值而非肉眼看 UI——能抓出静默 bug(数值看着合理但偏大);见 §8 第 9 条 |
 | **图标命名:npm 镜像与运行时不同步** | 🔶 | 实测(dsh-ai-toolbox) | npm 发布包 62 个唯一图形 vs 运行时 seed 表 96+,命名不一致——选图标以**运行时实测**为准(在浏览器里枚举),npm 文档仅参考 |
 | **V8 新版 SyntaxError 不带 position** | 🔶 | dev-toolbox JsonFormatter | Node 24/V8 新版错误对象无 position 字段,行号反推失效——兜底方案:递归下降结构扫描器(只定位不建值) |
 | **插件级 Config + locale**(示范已入骨架) | ✅ | `skeleton/index.js`(Config)+ `skeleton/src/locales.ts` | Config=Schema.object → apply(ctx, config) 第二参;locale=inject 'locale' + ctx.locale.register/bind 经 inject face 下发 t;**配置表单 UI 需自绘**(plugins.row.config 插槽,契约见 AGENTS.md) |

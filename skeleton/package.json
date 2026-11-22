@@ -8,7 +8,9 @@
     "index.js",
     "client.js",
     "cordis.patch.yml",
-    "service"
+    "service",
+    "locale/*.json",
+    "icon.svg"
   ],
   "scripts": {
     "build": "node build.mjs",
@@ -28,7 +30,9 @@
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
   },
   "engines": {
     "dsh": ">=0.2.0 <0.3"

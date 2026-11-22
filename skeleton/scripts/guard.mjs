@@ -17,7 +17,7 @@ const warn = (msg) => console.warn(`[guard] ⚠ ${msg}(不阻断,但建议修)`)
 const hostFiles = ['index.js', ...readdirSync('service').map(f => join('service', f))]
 for (const f of hostFiles) {
   if (statSync(f).isFile() && readFileSync(f, 'utf8').includes('required: false')) {
-    fail(`${f} 含 required: false(坑 #1:可选参数整个省略 required 字段)`)
+    fail(`${f} 含 required: false(坑 #1:可选参数整个省略 required 字段;真实错误:JsonSchemaError: parameters.store.required must be true when present)`)
   }
 }
 if (failures === 0) ok('工具参数无 required: false(坑 #1)')
@@ -71,6 +71,48 @@ if (existsSync('src')) {
   const hits = walkSrc('src', [])
   for (const p of hits) fail(`${p} import 了 Harness Client 包(官方 practices.md 禁令;素材 vendored、类型 shim 自持)`)
   if (hits.length === 0) ok('src/ 无 Harness Client 包 import(practices.md 禁令)')
+}
+
+// 展示元数据(官方 host-plugin.md 清单):Plugins 页读 locale/*.json 的 meta.title/description
+// 与 icon;缺失时回落到 package.json name/description 与默认占位图(坑 #19)
+{
+  for (const f of ['locale/en.json', 'locale/zh.json', 'icon.svg']) {
+    if (!existsSync(f)) fail(`缺 ${f}(Plugins 页的标题/描述/图标;官方 host-plugin.md 要求)`)
+  }
+  let pkg
+  try { pkg = JSON.parse(readFileSync('package.json', 'utf8')) } catch { pkg = undefined }
+  if (pkg) {
+    const files = pkg.files ?? []
+    for (const pattern of ['locale/*.json', 'icon.svg']) {
+      if (!files.includes(pattern)) fail(`package.json 的 files 漏了 ${pattern}(host-plugin.md:打包闭包必须含 locale 与 icon)`)
+    }
+    if (pkg.exports?.['./icon'] === undefined) fail('package.json 的 exports 漏了 ./icon(host-plugin.md 要求导出)')
+    if (pkg.exports?.['./locale/*.json'] === undefined) fail('package.json 的 exports 漏了 ./locale/*.json(host-plugin.md 要求导出)')
+    if (failures === 0) ok('展示元数据齐全(locale meta + icon + files/exports 闭包)')
+  }
+}
+
+// session projection 的 fork 守卫(坑:fork 会话把父会话历史算成自己的,静默偏大不报错):
+// 注册了 projection 的文件必须含 inheritedEventCount 守卫(init 存下 + apply 首行短路)
+{
+  const projFiles = []
+  const scan = (dir) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name)
+      if (statSync(p).isDirectory()) scan(p)
+      else if (/\.(tsx?|m?js)$/.test(name)) {
+        const s = readFileSync(p, 'utf8')
+        if (/sessionProjections\s*\.\s*register/.test(s)) {
+          if (!/inheritedEventCount/.test(s)) fail(`${p} 注册了 session projection 但没有 inheritedEventCount 守卫(缺了会静默错:fork 会话把父历史算成自己的)`)
+          else projFiles.push(p)
+        }
+      }
+    }
+  }
+  if (existsSync('src')) {
+    scan('src')
+    if (projFiles.length === 0) ok('未使用 session projection(如引入:init 必须存 inheritedEventCount,apply 首行按 seq 短路)')
+  }
 }
 
 // token 纪律(warn 级):业务页面裸写 hex 颜色 → 设计变体(terminal/paper/商店绿)换不动它,

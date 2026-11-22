@@ -73,6 +73,12 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 6. SVG 里不放文字(会被 viewBox 放大,坑 #2)——标签用 HTML 覆盖层
 7. 所有 `ctx.effect` 必须返回清理函数(样式/表/ sprite 卸载残留 = 幽灵样式)
 8. `build.mjs` 的 external 表不要动:react 与 `@deepseek-ai/*` 运行时由平台提供,打包进去必崩
+9. 若使用 session projection:`init` 必须接收并存下 `inheritedEventCount`,`apply` 首行必须
+   `if (event.seq < state.inheritedEventCount) return state`——否则 fork 出的会话会把父会话的
+   历史算成自己的,**这类错误不报错,只会让数字偏大**(官方 action-cards projection 即此形态)。
+   改动折叠语义时必须 bump `stateVersion`
+10. 注册右侧栏 tab 类型(`sidebarRightTabs.register`)必须给 `guide` 条目——官方 tab-registry
+    明注 "Omit to stay off it":省略 `guide` = 不上 guide 页 = 注册成功但界面上打不开
 
 ## 开发工作流(加一个页面的标准路径)
 

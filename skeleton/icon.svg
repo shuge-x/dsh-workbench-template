@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none">
+  <!-- 官方 artwork.md 合规:36×36 viewBox;字标用路径不用 <text>;不画底板(Plugin Manager 自绘瓷砖) -->
+  <path d="M8.5 10L13.5 26L18 14.5L22.5 26L27.5 10" stroke="#4f6ef0" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "工作台",
+    "description": "基于 dsh web 的工作台插件:带侧边栏入口的主面板,配同源 HTTP 数据服务与可选的 agent 工具。"
+  }
+}

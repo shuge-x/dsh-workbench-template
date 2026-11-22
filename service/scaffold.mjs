@@ -74,6 +74,13 @@ export async function scaffoldProject({ target, name, id } = {}) {
   replaceIn(join(t, 'src', 'client.tsx'), [['dsh-myworkbench', n], ['my-workbench', i]])
   // theme.ts 的 PKG 常量(sprite 命名空间化用)也随包名改
   replaceIn(join(t, 'src', 'theme.ts'), [['dsh-myworkbench', n]])
+  // locale/*.json(meta.title/description)文案不含包名,故不参与替换;
+  // 将来若在展示元数据里加入包名,须在这里同步加 replaceIn
+
+  // 生成后自检:展示元数据必须随骨架齐全(缺了 Plugins 页无标题无图标,坑 #19)
+  for (const f of ['locale/en.json', 'locale/zh.json', 'icon.svg']) {
+    if (!existsSync(join(t, f))) return { error: `生成结果缺少 ${f}(骨架展示元数据不完整,请检查 skeleton/)` }
+  }
 
   // 官方规范随行:骨架已内置快照(docs/official/dsh-doc/,随上面 cpSync 一起落地),
   // 这里尝试从 GitHub 升级到与本机 dsh 版本对齐的官方版;失败保留快照(VERSION.txt 如实标注)

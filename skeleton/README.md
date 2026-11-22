@@ -5,9 +5,12 @@
 **不要在本目录直接开发** — 用上一级的脚手架复制一份:
 
 ```sh
-node ../scaffold.mjs ../my-new-workbench --name dsh-plugin-mynewwb --id mynewwb --port 3801
+node ../scaffold.mjs ../my-new-workbench --name dsh-mynewwb --id mynewwb
 cd ../my-new-workbench && npm install && npm run build
 ```
+
+> **首次安装前先 `npm install`**:本地 link 安装时,插件依赖必须在**它自己的目录**里
+> (Node 按真实路径向上找 `node_modules`,profile 的不在路上,坑 #17);`start.sh` 会自动做这一步。
 
 安装与启动、插件机制细节、踩坑清单见 `../docs/dsh-plugin-playbook.md`。
 

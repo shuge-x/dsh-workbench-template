@@ -65,7 +65,8 @@ export function apply(ctx: DshClientContext): void {
   if (SHOW_EXAMPLES) attachExamples(ctx) // ← 示例区唯一调用;彻底删除时删本行与上面的 import(见 docs/EXAMPLES.md)
 
   // 插件行配置页:插件管理页里本插件行出现「配置」控件;保存写回 profile patch,HMR 热重载生效。
-  // 键 = 包名#insert id(insert id 见 cordis.patch.yml;两个前缀形态都注册以兼容)。
+  // 键 = 包名#row id(row id 见 cordis.patch.yml;官方描述为 `<package name>#<row id>`,
+  // 故主用第二个;带 include: 的形态一并注册以兼容可能的 dispatch 变体,实测二者都能命中)。
   for (const key of ['dsh-myworkbench#include:my-workbench', 'dsh-myworkbench#my-workbench']) {
     ctx.slots.inject('plugins.row.config', () => ctx.slots.register(
       { name: 'plugins.row.config', key },

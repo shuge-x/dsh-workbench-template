@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Workbench template",
+    "description": "Scaffolds standard dsh workbench plugin projects from the built-in skeleton: AI handbook, guard gates, design library, and bundled official docs."
+  }
+}
