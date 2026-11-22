@@ -1,4 +1,5 @@
 /** 数据库层骨架:SQLite(node:sqlite),首启自动建表 + 造数(确定性)。 */
+import { homedir } from 'node:os'
 import { DatabaseSync } from 'node:sqlite'
 import { copyFileSync, mkdirSync, rmSync, existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -6,45 +7,40 @@ import { fileURLToPath } from 'node:url'
 import { seed } from './seed.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))       // .../<包名>/service
-const PKG_ROOT = dirname(here)                              // 包根
-const PKG_NAME = JSON.parse(readFileSync(join(PKG_ROOT, 'package.json'), 'utf8')).name
-
-/** 从包根向上找 profile 根(package.json 带 dsh.profile 标记);独立运行返回 null。
- *  兼容 link:(realpath=项目目录,向上无 profile)与 pnpm git(.pnpm 布局,向上有)两种安装形态。 */
-function findProfileRoot() {
-  let dir = PKG_ROOT
-  for (let i = 0; i < 10; i += 1) {
-    const marker = join(dir, 'package.json')
-    if (existsSync(marker)) {
-      try {
-        const p = JSON.parse(readFileSync(marker, 'utf8'))
-        if (p?.dsh?.profile) return dir
-      } catch { /* 继续向上 */ }
-    }
-    const parent = dirname(dir)
-    if (parent === dir) return null
-    dir = parent
-  }
-  return null
-}
+const PKG_DIR = dirname(here)                              // 包根
+const PKG_NAME = JSON.parse(readFileSync(join(PKG_DIR, 'package.json'), 'utf8')).name
 
 /**
- * 数据目录:优先 <profile根>/data/<包名>/——跟随 profile 的稳定位置,
- * 插件升级/重装(node_modules 包目录被替换)不触碰数据。
- * profile 之外独立运行时回退到包内 data/(当前行为)。
+ * 数据目录(优先级,与 ai-writing-workbench 会话的标准实现一致):
+ *  1. <前缀>_DATA_DIR 环境变量显式覆盖(测试用)
+ *  2. $DSH_PROFILE_DIR/data/<包名>/ —— profile 用户数据区(官方 env,随 profile 存活、
+ *     重启不丢、永不随包打包;插件升级/重装替换包目录不触碰数据)
+ *  3. 无 profile(独立运行)回退 ~/.dsh/data/<包名>/
+ * 旧位置(包目录内 service/data/)的一次性搬迁见 LEGACY_MIGRATE。
  */
-const legacyDir = join(here, 'data')                      // 旧位置:包内(github/npm 安装升级时会被替换)
-const profileRoot = findProfileRoot()
-export const DATA_DIR = profileRoot ? join(profileRoot, 'data', PKG_NAME) : legacyDir
-export const DB_PATH = join(DATA_DIR, 'data.db')
+function resolveDataDir() {
+  const envOverride = process.env.WB_DATA_DIR
+  if (envOverride) return envOverride
+  const base = process.env.DSH_PROFILE_DIR
+    ? join(process.env.DSH_PROFILE_DIR, 'data')
+    : join(homedir(), '.dsh', 'data')
+  return join(base, PKG_NAME)
+}
 
-// 一次性迁移:旧位置有库、新位置没有 → 整体搬移(含 WAL/SHM)。
-// 场景:项目先以 link 方式运行(数据在包内),后来改用 github/npm 分发安装——升级不丢库。
-if (profileRoot && existsSync(join(legacyDir, 'data.db')) && !existsSync(DB_PATH)) {
+export const DATA_DIR = resolveDataDir()
+export const DB_PATH = join(DATA_DIR, 'workbench.db')
+
+/** 老位置(包目录内 service/data/):首启自动搬迁,搬完即弃,包目录不再产生运行时数据。 */
+const LEGACY_DATA_DIR = join(PKG_DIR, 'data')
+
+/** 一次性搬迁老库(db + wal/shm 同行);新库已存在则不动,避免覆盖。 */
+function migrateLegacyData() {
+  const old = join(LEGACY_DATA_DIR, 'workbench.db')
+  if (!existsSync(old) || existsSync(DB_PATH)) return
   mkdirSync(DATA_DIR, { recursive: true })
-  copyFileSync(join(legacyDir, 'data.db'), DB_PATH)
+  copyFileSync(old, DB_PATH)
   for (const suffix of ['-wal', '-shm']) {
-    if (existsSync(join(legacyDir, 'data.db') + suffix)) copyFileSync(join(legacyDir, 'data.db') + suffix, DB_PATH + suffix)
+    if (existsSync(old + suffix)) copyFileSync(old + suffix, DB_PATH + suffix)
   }
 }
 
@@ -52,6 +48,7 @@ let db = null
 
 export function getDb() {
   if (db !== null) return db
+  migrateLegacyData()
   mkdirSync(DATA_DIR, { recursive: true })
   db = new DatabaseSync(DB_PATH)
   db.exec('PRAGMA journal_mode = WAL')
