@@ -22,6 +22,12 @@
 2. 让 AI 按该变体的 YAML tokens 更新 `src/theme.ts` 的对应值(token 名不变,只换值)
 3. `npm run build` → 刷新浏览器
 
+## 运行时包(机器形态)
+
+每套设计的**运行时数据包**在 `src/design/variants.ts`——与这里的 md 契约一一对应:
+**加一套设计 = md(契约)+ variants.ts 包(机器)两个文件同源配对**。切换器在运行时
+应用对应包的变量覆盖(html[data-wb-variant] 作用域),即时生效、localStorage 记忆。
+
 ## 加一套新设计
 
 1. 复制任一现有变体为 `DESIGN-<风格名>.md`,改 YAML 与正文

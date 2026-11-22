@@ -10,6 +10,7 @@
 import type { ReactNode } from 'react'
 import type { DshClientContext } from './shim'
 import { THEME_CSS, mountIconSprite } from './theme'
+import { VARIANT_CSS, applyVariant } from './design/switcher'
 import { dicts, NS_HOME } from './locales'
 import { CSS } from './styles'
 import { BrandMark, BrandName } from './brand'
@@ -32,11 +33,12 @@ export function apply(ctx: DshClientContext): void {
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.wbPlugin = 'dsh-myworkbench'
-    style.textContent = THEME_CSS + CSS
+    style.textContent = THEME_CSS + VARIANT_CSS + CSS
     document.head.append(style)
     return () => { style.remove() }
   }, 'myworkbench: styles')
   mountIconSprite(ctx)
+  applyVariant() // 应用已保存的设计变体(html data 属性);切换控件在首页顶栏内
   // 本地化:注册命名空间字典;页面经 inject face 拿 t(改动语言在壳设置里即时生效)
   ctx.effect(() => ctx.locale.register(NS_HOME, dicts[NS_HOME]!), 'myworkbench: locale')
 

@@ -97,7 +97,7 @@ export function ScaffoldPage(): ReactNode {
     `这是一个刚生成的 dsh 工作台插件项目(路径 ${result.target},包名 ${result.name},插件 id ${result.id})。`,
     '请先完成「入职」,暂时不要写任何代码:',
     '1. 读完 AGENTS.md —— 项目身份、红线、开发工作流',
-    '2. 读完 DESIGN.md —— 视觉契约(设计语言、Do/Don\'t);换设计见 design/ 目录',
+    '2. 读完 DESIGN.md —— 视觉契约(设计语言、Do/Don\'t);首页右上角 ◐ 可即时切换设计语言,换语言见 design/ 目录',
     '3. 读完 docs/EXAMPLES.md 与 src/examples/ 的 9 个示例页源码(渲染效果:把 src/client.tsx 的 SHOW_EXAMPLES 置 true)',
     '4. 用几句话向我复述:这个目录是什么、有哪些既定约束、你准备按什么工作流开发;然后向我提出你需要澄清的问题',
     '',

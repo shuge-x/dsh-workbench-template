@@ -10,7 +10,10 @@ type T = (key: string) => string
 export function HomePage({ t }: { t?: T } = {}): ReactNode {
   return (
     <div className="wb-page">
-      <div className="wb-topbar"><span className="wb-title">{t ? t('homeTitle') : '首页'}</span></div>
+      <div className="wb-topbar">
+        <span className="wb-title">{t ? t('homeTitle') : '首页'}</span>
+        <DesignSwitcher />
+      </div>
       <div className="wb-body" />
     </div>
   )
