@@ -17,9 +17,6 @@ export const EXAMPLES_CSS = String.raw`
 .wbex-icon-cell svg { color: var(--wb-ink); }
 .wbex-icon-cell span { font-size: 11px; color: var(--wb-ink2); }
 .wbex-icon-cell:hover { background: var(--wb-bg); border-color: var(--wb-line); }
-.wbex-file-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
-.wbex-file-cell { display: flex; flex-direction: column; align-items: center; padding: 12px 4px; border-radius: 10px; }
-.wbex-file-cell:hover { background: var(--wb-bg); }
 .wbex-map-layout { display: grid; grid-template-columns: 1fr 260px; gap: 14px; align-items: start; }
 .wbex-map-label {
   position: absolute; transform: translate(-50%, -50%);

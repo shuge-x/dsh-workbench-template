@@ -1,62 +1,54 @@
 /**
  * 【示例·图标与样式规范】生成项目的「活样式手册」+ 图标浏览器。
- *  四区:通用图标网格(官方 97+ 图形)/ 标签与选项 / 文件类型图标 / 按钮状态提示。
- *  素材来源: DeepSeek Harness · MIT(官方包 @deepseek-ai/dsh-client-ui-primitives,零拷贝)。
- *  抄范式:官方图标组件 + sprite 挂载(theme.ts 的 mountIconSprite)/ 官方组件与自有主题类并用。
+ *  三区:通用图标网格(官方图形 vendored 快照 106 图形×2权重)/ 标签与选项 / 按钮状态提示。
+ *  素材来源:DeepSeek Harness · MIT(vendored 于 src/design/icons-data.ts,不 import 官方包)。
+ *  抄范式:WbIcon sprite 引用(theme.ts mountIconSprite 挂载)+ 官方素材与自有主题类并用。
  */
-import { useMemo, useState, type ComponentType, type ReactNode } from 'react'
-import * as Primitives from '@deepseek-ai/dsh-client-ui-primitives'
-import { FileTypeIcon, StateDot, Pill } from '@deepseek-ai/dsh-client-ui-primitives'
-import { FILE_SAMPLES } from './data'
+import { useMemo, useState, type ReactNode } from 'react'
+import { WbIcon } from '../icons'
+import { ICON_GLYPH_NAMES } from '../design/icons-data'
 
-type IconComp = ComponentType<{ size?: number }>
-type Weight = 'Regular' | 'Medium'
+type Weight = 'regular' | 'medium'
 
-/** 从官方包根导出里自发现全部产品图标(名称规范:Icon<Glyph><Weight>)。 */
-const ALL_ICONS = Object.entries(Primitives)
-  .filter(([k]) => /^Icon[A-Za-z0-9]+(Regular|Medium)$/.test(k))
-  .map(([key]) => {
-    const m = key.match(/^Icon([A-Za-z0-9]+?)(Regular|Medium)$/)!
-    return { key, glyph: m[1].replace(/Outline$/, ''), weight: m[2] as Weight }
-  })
-
-const GLYPHS = [...new Set(ALL_ICONS.map(i => i.glyph))].sort()
+const GLYPHS = ICON_GLYPH_NAMES
 
 /** 常用图形的中文名(未收录的显示键名;可自行补全)。 */
 const LABELS: Record<string, string> = {
-  NewChat: '新对话', CordisPlugin: '插件', Search: '搜索', Globe: '浏览器', Settings: '设置',
-  PanelLeft: '侧栏', Ellipsis: '更多', Plus: '添加', Check: '确认', Copy: '复制', Refresh: '刷新',
-  Share: '分享', Edit: '编辑', Trash: '删除', Warning: '警告', User: '用户', Users: '用户组',
-  PaperPlane: '发送', StopFill: '停止', Paperclip: '附件', Download: '下载', Play: '播放',
-  Pause: '暂停', Fullscreen: '全屏', Code: '代码', Api: '接口', ProjectAdd: '新建项目',
-  FolderOpen: '打开目录', FolderClose: '文件夹', Save: '保存', Branch: '分支', Link: '链接',
-  Think: '思考', Browse: '浏览', Loading: '加载中', Like: '赞同', Dislike: '反对', Close: '关闭',
-  RightUp: '外链', Light: '浅色', Dark: '深色', Followsystem: '跟随系统', DeliverDoc: '送达',
-  AgentPreset: '智能体', Enhance: '增强', ContextInjection: '上下文', TreeCorner: '树形',
+  'new-chat-outline': '新对话', 'cordis-plugin-outline': '插件', 'search-outline': '搜索',
+  'globe-outline': '浏览器', 'settings-outline': '设置', 'panel-left-outline': '侧栏',
+  'ellipsis-outline': '更多', 'plus-outline': '添加', 'check-outline': '确认',
+  'copy-outline': '复制', 'refresh-outline': '刷新', 'share-outline': '分享',
+  'edit-outline': '编辑', 'trash-outline': '删除', 'warning-outline': '警告',
+  'user-outline': '用户', 'users-outline': '用户组', 'paper-plane-outline': '发送',
+  'stop-fill': '停止', 'paperclip-outline': '附件', 'download-outline': '下载',
+  'play-outline': '播放', 'pause-outline': '暂停', 'fullscreen-outline': '全屏',
+  'code-outline': '代码', 'api-outline': '接口', 'project-add-outline': '新建项目',
+  'folder-open-outline': '打开目录', 'folder-close': '文件夹', 'save-outline': '保存',
+  'branch-outline': '分支', 'link-outline': '链接', 'think-outline': '思考',
+  'browse-outline': '浏览', 'loading-outline': '加载中', 'like-outline': '赞同',
+  'dislike-outline': '反对', 'close-outline': '关闭', 'right-up-outline': '外链',
+  'light-outline': '浅色', 'dark-outline': '深色', 'followsystem-outline': '跟随系统',
+  'deliver-doc': '送达', 'agent-preset-outline': '智能体', 'enhance-outline': '增强',
+  'context-injection-outline': '上下文', 'tree-corner': '树形', 'database-outline': '数据库',
+  'data-outline': '数据', 'plan-outline': '计划', 'goal-outline': '目标',
+  'skill-outline': '技能', 'inspect-outline': '检查', 'upload-outline': '上传',
+  'archive-outline': '归档', 'alarm-clock-outline': '提醒', 'checklist-outline': '清单',
+  'info-outline': '信息', 'question-outline': '疑问', 'mail-read-outline': '已读',
+  'mail-unread-outline': '未读', 'chevron-down-outline': '展开', 'chevron-up-outline': '收起',
+  'chevron-left-outline': '上一步', 'chevron-right-outline': '下一步',
 }
 
-function pick(glyph: string, weight: Weight): { key: string; Comp: IconComp } | null {
-  const order: Weight[] = [weight, weight === 'Regular' ? 'Medium' : 'Regular']
-  for (const w of order) {
-    const hit = ALL_ICONS.find(i => i.glyph === glyph && i.weight === w)
-    if (hit) return { key: hit.key, Comp: Primitives[hit.key] as IconComp }
-  }
-  return null
-}
-
-/** 点击图标后展开的用法条:组件名 + 两行可复制代码。 */
+/** 点击图标后展开的用法条:glyph 名 + 两行可复制代码。 */
 function IconDetail({ glyph, weight, size, onClose }: { glyph: string; weight: Weight; size: number; onClose: () => void }): ReactNode {
-  const hit = pick(glyph, weight)
-  if (hit === null) return null
-  const snippet = `import { ${hit.key} } from '@deepseek-ai/dsh-client-ui-primitives'\n\n<${hit.key} size={${size}} />`
+  const snippet = `import { WbIcon } from '../icons'\n\n<WbIcon glyph="${glyph}" weight="${weight}" size={${size}} />`
   return (
     <div className="wb-card" style={{ margin: '12px 0', borderColor: 'var(--wb-accent)' }}>
       <div className="wb-row" style={{ justifyContent: 'space-between' }}>
         <div className="wb-row">
-          <span style={{ color: 'var(--wb-ink2)' }}><hit.Comp size={26} /></span>
+          <span style={{ color: 'var(--wb-ink2)' }}><WbIcon glyph={glyph} weight={weight} size={26} /></span>
           <div>
             <div style={{ fontWeight: 650 }}>{LABELS[glyph] ?? glyph}</div>
-            <div className="wb-sub">{hit.key}</div>
+            <div className="wb-sub">{glyph} · {weight}</div>
           </div>
         </div>
         <div className="wb-row">
@@ -70,7 +62,7 @@ function IconDetail({ glyph, weight, size, onClose }: { glyph: string; weight: W
 }
 
 export function IconsPage(): ReactNode {
-  const [weight, setWeight] = useState<Weight>('Regular')
+  const [weight, setWeight] = useState<Weight>('regular')
   const [size, setSize] = useState(20)
   const [q, setQ] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
@@ -85,7 +77,7 @@ export function IconsPage(): ReactNode {
       <div className="wb-topbar">
         <div>
           <div className="wb-title">图标与样式规范</div>
-          <div className="wb-sub">共 {GLYPHS.length} 种图形 · 普通 1px / 强调 1.3px · 素材来源 DeepSeek Harness(MIT)</div>
+          <div className="wb-sub">共 {GLYPHS.length} 种图形 · 普通 1px / 强调 1.3px · 官方图形 vendored 快照(DeepSeek Harness,MIT)</div>
         </div>
         <div className="wb-row" style={{ marginLeft: 'auto' }}>
           <input className="wb-input" placeholder="搜索图标名称" value={q} onChange={e => setQ(e.target.value)} style={{ width: 180 }} />
@@ -93,9 +85,9 @@ export function IconsPage(): ReactNode {
       </div>
       <div className="wb-body">
         <div className="wb-row" style={{ marginBottom: 12 }}>
-          {(['Regular', 'Medium'] as Weight[]).map(w => (
+          {(['regular', 'medium'] as Weight[]).map(w => (
             <button key={w} className={'wb-chip' + (weight === w ? ' on' : '')} onClick={() => setWeight(w)}>
-              {w === 'Regular' ? '普通 1px' : '强调 1.3px'}
+              {w === 'regular' ? '普通 1px' : '强调 1.3px'}
             </button>
           ))}
           <select className="wb-select" value={size} onChange={e => setSize(Number(e.target.value))}>
@@ -108,16 +100,12 @@ export function IconsPage(): ReactNode {
 
         <div className="wb-card" style={{ padding: 14 }}>
           <div className="wbex-icon-grid">
-            {shown.map(g => {
-              const hit = pick(g, weight)
-              if (hit === null) return null
-              return (
-                <button key={g} className="wbex-icon-cell" onClick={() => setSelected(g)}>
-                  <hit.Comp size={size} />
-                  <span>{LABELS[g] ?? g}</span>
-                </button>
-              )
-            })}
+            {shown.map(g => (
+              <button key={g} className="wbex-icon-cell" onClick={() => setSelected(g)}>
+                <WbIcon glyph={g} weight={weight} size={size} />
+                <span>{LABELS[g] ?? g}</span>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -137,25 +125,13 @@ export function IconsPage(): ReactNode {
             <span className="wb-pill err">执行失败</span>
             <span className="wb-pill info">分析中</span>
           </div>
-          <div className="wb-sub" style={{ marginBottom: 8 }}>可点击胶囊(官方 Pill,选中由 active 驱动)</div>
+          <div className="wb-sub" style={{ marginBottom: 8 }}>可点击胶囊(wb-chip + useState,选中由类名驱动)</div>
           <div className="wb-row">
-            {['全部', '进行中', '已完成'].map((t, i) => <PillExample key={t} label={t} defaultOn={i === 0} />)}
+            {['全部', '进行中', '已完成'].map((t, i) => <ChipExample key={t} label={t} defaultOn={i === 0} />)}
           </div>
         </div>
 
-        <div className="wb-sec"><span className="wb-sec-no">02</span><span className="wb-sec-title">文件类型图标(官方 FileTypeIcon,按扩展名自动分类)</span></div>
-        <div className="wb-card">
-          <div className="wbex-file-row">
-            {FILE_SAMPLES.map(name => (
-              <div key={name} className="wbex-file-cell">
-                <FileTypeIcon path={name} size={30} />
-                <div className="wb-sub" style={{ marginTop: 6 }}>{name}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="wb-sec"><span className="wb-sec-no">03</span><span className="wb-sec-title">按钮、状态与提示(悬停、选中、禁用都有明确反馈)</span></div>
+        <div className="wb-sec"><span className="wb-sec-no">02</span><span className="wb-sec-title">按钮、状态与提示(悬停、选中、禁用都有明确反馈)</span></div>
         <div className="wb-card">
           <div className="wb-row" style={{ marginBottom: 14 }}>
             <button className="wb-btn primary">开始分析</button>
@@ -163,10 +139,10 @@ export function IconsPage(): ReactNode {
             <button className="wb-btn primary" disabled>暂不可用</button>
           </div>
           <div className="wb-row" style={{ marginBottom: 14, gap: 18 }}>
-            {(['done', 'ongoing', 'warning', 'error', 'idle'] as const).map(s => (
+            {(['ok', 'info', 'warn', 'err', 'idle'] as const).map(s => (
               <span key={s} className="wb-row" style={{ gap: 6 }}>
-                <StateDot state={s} />
-                <span className="wb-sub">{{ done: '已完成', ongoing: '进行中', warning: '待确认', error: '失败', idle: '空闲' }[s]}</span>
+                <span className={`wb-dot ${s}`} />
+                <span className="wb-sub">{{ ok: '已完成', info: '进行中', warn: '待确认', err: '失败', idle: '空闲' }[s]}</span>
               </span>
             ))}
           </div>
@@ -182,7 +158,9 @@ export function IconsPage(): ReactNode {
   )
 }
 
-function PillExample({ label, defaultOn }: { label: string; defaultOn: boolean }): ReactNode {
+function ChipExample({ label, defaultOn }: { label: string; defaultOn: boolean }): ReactNode {
   const [on, setOn] = useState(defaultOn)
-  return <Pill active={on} onClick={() => setOn(!on)}>{label}</Pill>
+  return (
+    <button className={'wb-chip' + (on ? ' on' : '')} onClick={() => setOn(!on)}>{label}</button>
+  )
 }

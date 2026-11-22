@@ -65,8 +65,6 @@ export const form = {
   metrics: ['实收金额', '订单量', '杯量', '客单价'],
 }
 
-export const FILE_SAMPLES = ['季度报表.xlsx', '运营方案.docx', '盘点说明.pdf', '经营汇报.pptx', '数据看板.html', '门头照片.png', '值班手册.md']
-
 /** 地图页 mock:虚构区域的抽象轮廓(0..800×0..560 viewBox 内的多边形)。
  *  真实地理版(中国 GeoJSON + Web Mercator)见样板项目 dsh-workbench-sample 的经营地图。 */
 export const mapData = {

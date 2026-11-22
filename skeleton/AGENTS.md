@@ -65,8 +65,7 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 2. `defineTool` 可选参数**整个省略 `required` 字段**,禁止写 `required: false`(坑 #1,注册被拒)
 3. **主代码(src/pages)禁止 import src/examples**——示例必须可整体删除(guard 边界检查)
 4. `src/theme.ts` 是共享资产:只用不删;要加词汇在尾部追加,不改动既有类
-5. 图标优先用官方包 `@deepseek-ai/dsh-client-ui-primitives`(sprite 已由 theme.ts 挂载)——先到「示例·工作台 → 图标规范」搜合适的官方图形;确实没有才自绘,放进 src/icons.tsx 并注明用途。禁止整段拷贝 dsh 官方 SVG 源码。
-   「没有贴合图形」的判断依据:grep 官方包的图形键名 `grep -oE '"[a-z0-9-]+"' node_modules/@deepseek-ai/dsh-client-ui-primitives/lib/types/../../*/artwork* 2>/dev/null || node -e "console.log(Object.keys(require('fs').readFileSync(0,'utf8')?'':{}))"——更简单:在 Icon<Glyph><Weight> 命名规则下枚举候选名逐一试引入;判断前至少看完 96 个图形名,不许只凭想象下结论
+5. 图标用官方图形库的 vendored 快照(src/design/icons-data.ts,MIT,theme.ts 已挂 sprite)——**禁止 import `@deepseek-ai/dsh-client-*` 任何 Harness Client 包**(官方 practices.md 明令插件不得 require/load:无预警变更,组件一抛错槽位即白屏)。用法:`WbIcon`(src/icons.tsx)按 glyph 名引用;先到「示例·工作台 → 图标规范」按中文名或键名搜合适图形(106 图形 × 2 权重,键名见 icons-data.ts),确实没有才自绘,放进 src/icons.tsx 并注明用途。官方出新版后由模板仓库 `npm run vendor-icons` 重提取,项目内不手改数据文件。
 6. SVG 里不放文字(会被 viewBox 放大,坑 #2)——标签用 HTML 覆盖层
 7. 所有 `ctx.effect` 必须返回清理函数(样式/表/ sprite 卸载残留 = 幽灵样式)
 8. `build.mjs` 的 external 表不要动:react 与 `@deepseek-ai/*` 运行时由平台提供,打包进去必崩

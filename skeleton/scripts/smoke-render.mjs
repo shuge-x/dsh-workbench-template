@@ -3,8 +3,8 @@
  * (坑 #15 的运行时形态:未导入标识符、props 契约错误、渲染期空指针)。
  *
  * 原理:临时生成一个入口,对 src/pages/*.tsx 与 src/examples/*Page*.tsx 的每个
- * 导出组件(名字以 Page/Panel 结尾)renderToString;官方图标包用 stub 替身
- * (冒烟只验我们的代码,图标契约由 vendor.d.ts + 浏览器实测守)。
+ * 导出组件(名字以 Page/Panel 结尾)renderToString——冒烟只验我们的代码,
+ * 图标是纯数据 + <use> 引用(SSR 安全),无外部包依赖。
  * 约定:页面组件命名以 Page 结尾(见 AGENTS.md 工作流)。
  */
 import { readdirSync, writeFileSync, mkdtempSync, rmSync, existsSync } from 'node:fs'
@@ -23,21 +23,7 @@ if (!existsSync(join(repo, 'node_modules/react-dom/package.json'))) {
 }
 const fail = (msg) => { console.error(`[smoke] ✗ ${msg}`); failures += 1 }
 
-// 官方包替身:契约面与 src/vendor.d.ts 一致(渲染为空节点)
-const stub = `
-export const ICON_SYMBOLS = {}
-export const ICON_REGULAR_STROKE = 1
-export const ICON_MEDIUM_STROKE = 1.3
-const Nil = () => null
-export const IconProjectAddOutlineRegular = Nil
-export const FileTypeIcon = Nil
-export const StateDot = Nil
-export const Pill = Nil
-`
-
 const tmp = mkdtempSync(join(tmpdir(), 'wb-smoke-'))
-const stubPath = join(tmp, 'stub.mjs')
-writeFileSync(stubPath, stub)
 
 // 收集页面文件 → 生成入口
 function existsSafe(p) { try { readdirSync(p); return true } catch { return false } }
@@ -92,7 +78,6 @@ try {
     format: 'cjs',
     outfile: join(tmp, 'bundle.cjs'),
     jsx: 'automatic',
-    alias: { '@deepseek-ai/dsh-client-ui-primitives': stubPath },
     logLevel: 'silent',
   })
   createRequire(import.meta.url)(join(tmp, 'bundle.cjs'))

@@ -4,7 +4,7 @@
  * 示例专用样式(wbex-)随面板注入;页面公共词汇来自 src/theme.ts。
  */
 import { useState, type ReactNode } from 'react'
-import { IconProjectAddOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
+import { WbIcon } from '../icons'
 import type { DshClientContext } from '../shim'
 import { OverviewPage } from './OverviewPage'
 import { ListPage } from './ListPage'
@@ -48,7 +48,7 @@ export function attachExamples(ctx: DshClientContext): void {
   ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: EXAMPLES_META.panelId }, ExamplePanel))
   ctx.slots.inject('sidebar.panellist', () => ctx.slots.register(
     { name: 'sidebar.panellist', id: EXAMPLES_META.panelId, order: EXAMPLES_META.order, label: EXAMPLES_META.title },
-    (props: { size?: number }) => <IconProjectAddOutlineRegular size={props.size ?? 16} />,
+    (props: { size?: number }) => <WbIcon glyph="project-add-outline" size={props.size ?? 16} />,
   ))
 }
 

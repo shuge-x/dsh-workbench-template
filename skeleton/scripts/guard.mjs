@@ -55,6 +55,23 @@ if (existsSync(join('docs', 'official', 'dsh-doc', 'SKILL.md'))) {
   fail('docs/official/dsh-doc/SKILL.md 缺失——官方规范随行被删(AGENTS.md 必读第一位)')
 }
 
+// 红线(官方 practices.md / verification.md):插件不得 require/load Harness Client 包
+// (无预警变更,组件一抛错槽位即白屏)。素材走 vendored(src/design/icons-data.ts),
+// 类型自持 shim.ts——src/ 里出现 @deepseek-ai/dsh-client-* import 一律阻断
+function walkSrc(dir, hits) {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name)
+    if (statSync(p).isDirectory()) walkSrc(p, hits)
+    else if (/\.(tsx?|m?js)$/.test(name) && /from\s+['"]@deepseek-ai\/dsh-client/.test(readFileSync(p, 'utf8'))) hits.push(p)
+  }
+  return hits
+}
+if (existsSync('src')) {
+  const hits = walkSrc('src', [])
+  for (const p of hits) fail(`${p} import 了 Harness Client 包(官方 practices.md 禁令;素材 vendored、类型 shim 自持)`)
+  if (hits.length === 0) ok('src/ 无 Harness Client 包 import(practices.md 禁令)')
+}
+
 // 静态引用检查:esbuild 不查标识符引用(坑 #15:`Pill is not defined` 构建全绿、渲染即崩)
 const tscBin = join('node_modules', '.bin', 'tsc')
 if (existsSync(tscBin)) {

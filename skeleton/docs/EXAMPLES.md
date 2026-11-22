@@ -17,7 +17,7 @@
 | 页面根容器必须是 `.wb-page`(样式作用域根) | 全部 7 页 | 缺失则外壳按钮默认样式漏入(坑 #14) |
 | 可选参数省略 `required` 字段,禁止 `required: false` | FormPage 的提交注释 | 坑 #1:写了直接 JsonSchemaError 注册被拒 |
 | 数据走同源前缀路由(`/wb-api/*`),零 CORS、零 sidecar 端口 | api.ts + FormPage 注释 | Host 半区 webServer prefix(借鉴 dsh-media-desk) |
-| 图标优先官方包 + sprite 挂载;先到图标规范页搜索,官方没有才自绘(放 src/icons.tsx 并注明) | IconsPage + theme.ts 的 mountIconSprite | 素材来源 DeepSeek Harness · MIT;currentColor 自动适配主题 |
+| 图标用官方图形 vendored 快照(WbIcon 按 glyph 引用 sprite);先到图标规范页搜索,没有贴合图形才自绘(放 src/icons.tsx 并注明) | IconsPage + theme.ts 的 mountIconSprite | 素材 vendored 于 src/design/icons-data.ts(官方 MIT);禁 import Harness Client 包(practices.md);currentColor 自动适配主题 |
 | effect 必须可清理(样式/表/sprite) | theme.ts / ExampleWorkbench 的 ctx.effect | 卸载残留会造成幽灵样式与重复 id |
 | SVG 内不放文字(会被 viewBox 放大) | OverviewPage / ChartPage 的 HTML 覆盖层 | 坑 #2 |
 | 页面四态(加载/空/错/无权限)必须备齐 | StatesPage | 用户判断「页面是不是坏了」全靠这些态 |
@@ -34,7 +34,7 @@
 | 图表分析页 | `ChartPage.tsx` | 折线+柱状零依赖画法、图例、周期切换 |
 | 表单/设置页 | `FormPage.tsx` | 表单结构、校验前置、提交中禁用、成功/失败反馈 |
 | 数据加载状态 | `StatesPage.tsx` | 骨架屏、空态给动作、错误带重试、无权限说明 |
-| 找图标/查样式 | `IconsPage.tsx` | 官方图标浏览器、标签胶囊、文件类型、按钮三态 |
+| 找图标/查样式 | `IconsPage.tsx` | 官方图形浏览器(106×2 权重)、标签胶囊、按钮三态 |
 | 区域地图页 | `MapPage.tsx` | Web Mercator 投影、SVG 区域着色、HTML 覆盖层标签(坑 #2)、点击联动 |
 | AI 流式输出页 | `StreamAiPage.tsx` | POST SSE 解析 data: 帧、逐字渲染+光标、AbortController 中止、显式降级 |
 

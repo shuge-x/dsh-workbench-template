@@ -3,13 +3,14 @@
  *
  * 分工约定(见 docs/EXAMPLES.md):
  *  - 本文件只放「跨页面复用的词汇」——页面级布局样式写在各页面自己的文件里
- *  - 图标一律用官方包(@deepseek-ai/dsh-client-ui-primitives,MIT),禁止手拷 SVG;
- *    sprite 由 mountIconSprite 统一挂载(官方组件是 <use> 引用,文档里必须有符号表)
+ *  - 图标用官方图形库的 vendored 快照(src/design/icons-data.ts,MIT)——官方明令插件
+ *    不得 require/load Harness Client 包(practices.md),故素材进包、不进依赖;
+ *    sprite 由 mountIconSprite 统一挂载,符号前缀 wb-icon- 防与宿主撞 id
  *  - 客户端样式改动零散无效时,先检查是不是忘了根容器 wb-page(坑 #14)
  *
- * 改名点:CSS 前缀 wb- → 你的前缀。
+ * 改名点:CSS 前缀 wb- → 你的前缀(含 sprite 前缀 wb-icon-)。
  */
-import { ICON_SYMBOLS } from '@deepseek-ai/dsh-client-ui-primitives'
+import { ICON_GLYPHS } from './design/icons-data'
 import type { DshClientContext } from './shim'
 
 export const THEME_CSS = String.raw`
@@ -84,6 +85,7 @@ export const THEME_CSS = String.raw`
 .wb-dot.ok { background: var(--wb-ok); }
 .wb-dot.warn { background: var(--wb-warn); }
 .wb-dot.err { background: var(--wb-err); }
+.wb-dot.info { background: var(--wb-accent); }
 .wb-dot.idle { background: var(--wb-idle); }
 .wb-kbd { font-size: 11px; border: 1px solid var(--wb-line); border-bottom-width: 2px; border-radius: 6px; padding: 1px 7px; color: var(--wb-ink2); background: var(--wb-card); }
 
@@ -122,8 +124,9 @@ export const THEME_CSS = String.raw`
 `
 
 /**
- * 官方图标 sprite 挂载:ui-primitives 的图标组件是 <use href="#dsw-icon-*"> 引用,
- * 文档里必须有符号表才渲染得出。壳不保证已挂,插件自挂幂等一份(卸载时移除)。
+ * 官方图形 sprite 挂载:vendored 数据(src/design/icons-data.ts,官方 artwork 物化)解析进
+ * <symbol id="wb-icon-<glyph>-<weight>">。WbIcon(src/icons.tsx)以 <use> 引用,文档里必须有
+ * 符号表才渲染得出。壳不保证挂,插件自挂幂等一份(卸载时移除)。
  */
 export function mountIconSprite(ctx: DshClientContext): void {
   ctx.effect(() => {
@@ -134,15 +137,17 @@ export function mountIconSprite(ctx: DshClientContext): void {
     svg.setAttribute('aria-hidden', 'true')
     svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'
     const parser = new DOMParser()
-    for (const [id, markup] of Object.entries(ICON_SYMBOLS) as [string, string][]) {
-      const root = parser.parseFromString(markup, 'image/svg+xml').documentElement
-      const symbol = document.createElementNS(NS, 'symbol')
-      symbol.id = id
-      for (const { name, value } of [...root.attributes]) {
-        if (!['width', 'height', 'xmlns', 'class', 'aria-hidden'].includes(name)) symbol.setAttribute(name, value)
+    for (const [glyph, weights] of Object.entries(ICON_GLYPHS)) {
+      for (const weight of ['regular', 'medium'] as const) {
+        const root = parser.parseFromString(weights[weight], 'image/svg+xml').documentElement
+        const symbol = document.createElementNS(NS, 'symbol')
+        symbol.id = `wb-icon-${glyph}-${weight}`
+        for (const { name, value } of [...root.attributes]) {
+          if (!['width', 'height', 'xmlns', 'class', 'aria-hidden'].includes(name)) symbol.setAttribute(name, value)
+        }
+        symbol.append(...[...root.childNodes].map(node => document.importNode(node, true)))
+        svg.append(symbol)
       }
-      symbol.append(...[...root.childNodes].map(node => document.importNode(node, true)))
-      svg.append(symbol)
     }
     document.body.prepend(svg)
     return () => { svg.remove() }
