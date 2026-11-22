@@ -93,18 +93,21 @@ export function ScaffoldPage(): ReactNode {
 
   // 首次会话提示词 = 入职引导:让 AI 了解背景与约束,然后主动向用户要需求。
   // 需求由用户在第二次对话自然给出——提示词整段复制即用,不含任何占位符。
+  // 阅读顺序与 AGENTS.md 必读顺序一致:官方规范随行(docs/official)在手册之前。
   const firstPrompt = ok && result !== null ? [
     `这是一个刚生成的 dsh 工作台插件项目(路径 ${result.target},包名 ${result.name},插件 id ${result.id})。`,
     '请先完成「入职」,暂时不要写任何代码:',
-    '1. 读完 AGENTS.md —— 项目身份、红线、开发工作流',
-    '2. 读完 DESIGN.md —— 视觉契约(设计语言、Do/Don\'t);首页右上角 ◐ 可即时切换设计语言,换语言见 design/ 目录',
-    '3. 读完 docs/EXAMPLES.md 与 src/examples/ 的 9 个示例页源码(渲染效果:把 src/client.tsx 的 SHOW_EXAMPLES 置 true)',
-    '4. 用几句话向我复述:这个目录是什么、有哪些既定约束、你准备按什么工作流开发;然后向我提出你需要澄清的问题',
+    '1. 读 docs/official/dsh-doc/SKILL.md —— 官方规范随行入口(优先级最高;references/ 按任务查,机制疑问题以运行中 dsh 实际行为为准)',
+    '2. 读完 AGENTS.md —— 项目身份、红线、规则层级与裁决程序、默认策略、开发工作流',
+    '3. 读完 DESIGN.md —— 视觉契约(设计语言、Do/Don\'t);首页右上角 ◐ 可即时切换设计语言,换语言见 design/ 目录',
+    '4. 读完 docs/EXAMPLES.md 与 src/examples/ 的 9 个示例页源码(渲染效果:把 src/client.tsx 的 SHOW_EXAMPLES 置 true)',
+    '5. 用几句话向我复述:这个目录是什么、有哪些既定约束、你准备按什么工作流开发;然后向我提出你需要澄清的问题',
     '',
     '我会在下一条消息里给出需求描述。开发约束(全程适用):',
     '页面范式照 examples 抄,不改 examples/ 与 theme.ts;主代码不 import 示例区;',
+    '图标用 WbIcon 按 glyph 名引用(先到「示例·工作台 → 图标规范」搜),禁止 import @deepseek-ai/dsh-client-* 任何包;',
     '每个新页面注册进 src/client.tsx 的 PANELS 并带 .wb-page 根容器;',
-    '每次改完跑 npm run guard && npm run build,全绿才算完成。',
+    '每次改完跑 npm run guard && npm run build,全绿才算完成;交付前按 AGENTS.md 验证清单走明暗双主题与 UX 自查。',
   ].join('\n') : ''
 
   return (
@@ -149,7 +152,7 @@ export function ScaffoldPage(): ReactNode {
               ✓ 已生成 {String(result.files?.length ?? 0)} 个文件
             </div>
             <div style={{ fontSize: 12.5, color: 'var(--tll-ink2)', marginBottom: 12 }}>
-              包名 {result.name} · 插件 id {result.id} · 端口 {result.port}
+              包名 {result.name} · 插件 id {result.id} · 官方规范随行 {result.officialDocs ?? '—'}
             </div>
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed var(--tll-line)' }}>
               <div style={{ fontSize: 13.5, fontWeight: 650, marginBottom: 8 }}>主路径:交给 AI 开发</div>
@@ -263,7 +266,7 @@ export function ScaffoldPage(): ReactNode {
           )}
         </div>
       </div>
-      <div style={{ display: 'none' }}><IconCopy size={12} /></div>      <div style={{ display: 'none' }}><IconCopy size={12} /></div>
+      <div style={{ display: 'none' }}><IconCopy size={12} /></div>
     </div>
   )
 }

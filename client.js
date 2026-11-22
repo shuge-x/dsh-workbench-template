@@ -545,15 +545,17 @@ function ScaffoldPage() {
   const firstPrompt = ok && result !== null ? [
     `\u8FD9\u662F\u4E00\u4E2A\u521A\u751F\u6210\u7684 dsh \u5DE5\u4F5C\u53F0\u63D2\u4EF6\u9879\u76EE(\u8DEF\u5F84 ${result.target},\u5305\u540D ${result.name},\u63D2\u4EF6 id ${result.id})\u3002`,
     "\u8BF7\u5148\u5B8C\u6210\u300C\u5165\u804C\u300D,\u6682\u65F6\u4E0D\u8981\u5199\u4EFB\u4F55\u4EE3\u7801:",
-    "1. \u8BFB\u5B8C AGENTS.md \u2014\u2014 \u9879\u76EE\u8EAB\u4EFD\u3001\u7EA2\u7EBF\u3001\u5F00\u53D1\u5DE5\u4F5C\u6D41",
-    "2. \u8BFB\u5B8C DESIGN.md \u2014\u2014 \u89C6\u89C9\u5951\u7EA6(\u8BBE\u8BA1\u8BED\u8A00\u3001Do/Don't);\u9996\u9875\u53F3\u4E0A\u89D2 \u25D0 \u53EF\u5373\u65F6\u5207\u6362\u8BBE\u8BA1\u8BED\u8A00,\u6362\u8BED\u8A00\u89C1 design/ \u76EE\u5F55",
-    "3. \u8BFB\u5B8C docs/EXAMPLES.md \u4E0E src/examples/ \u7684 9 \u4E2A\u793A\u4F8B\u9875\u6E90\u7801(\u6E32\u67D3\u6548\u679C:\u628A src/client.tsx \u7684 SHOW_EXAMPLES \u7F6E true)",
-    "4. \u7528\u51E0\u53E5\u8BDD\u5411\u6211\u590D\u8FF0:\u8FD9\u4E2A\u76EE\u5F55\u662F\u4EC0\u4E48\u3001\u6709\u54EA\u4E9B\u65E2\u5B9A\u7EA6\u675F\u3001\u4F60\u51C6\u5907\u6309\u4EC0\u4E48\u5DE5\u4F5C\u6D41\u5F00\u53D1;\u7136\u540E\u5411\u6211\u63D0\u51FA\u4F60\u9700\u8981\u6F84\u6E05\u7684\u95EE\u9898",
+    "1. \u8BFB docs/official/dsh-doc/SKILL.md \u2014\u2014 \u5B98\u65B9\u89C4\u8303\u968F\u884C\u5165\u53E3(\u4F18\u5148\u7EA7\u6700\u9AD8;references/ \u6309\u4EFB\u52A1\u67E5,\u673A\u5236\u7591\u95EE\u9898\u4EE5\u8FD0\u884C\u4E2D dsh \u5B9E\u9645\u884C\u4E3A\u4E3A\u51C6)",
+    "2. \u8BFB\u5B8C AGENTS.md \u2014\u2014 \u9879\u76EE\u8EAB\u4EFD\u3001\u7EA2\u7EBF\u3001\u89C4\u5219\u5C42\u7EA7\u4E0E\u88C1\u51B3\u7A0B\u5E8F\u3001\u9ED8\u8BA4\u7B56\u7565\u3001\u5F00\u53D1\u5DE5\u4F5C\u6D41",
+    "3. \u8BFB\u5B8C DESIGN.md \u2014\u2014 \u89C6\u89C9\u5951\u7EA6(\u8BBE\u8BA1\u8BED\u8A00\u3001Do/Don't);\u9996\u9875\u53F3\u4E0A\u89D2 \u25D0 \u53EF\u5373\u65F6\u5207\u6362\u8BBE\u8BA1\u8BED\u8A00,\u6362\u8BED\u8A00\u89C1 design/ \u76EE\u5F55",
+    "4. \u8BFB\u5B8C docs/EXAMPLES.md \u4E0E src/examples/ \u7684 9 \u4E2A\u793A\u4F8B\u9875\u6E90\u7801(\u6E32\u67D3\u6548\u679C:\u628A src/client.tsx \u7684 SHOW_EXAMPLES \u7F6E true)",
+    "5. \u7528\u51E0\u53E5\u8BDD\u5411\u6211\u590D\u8FF0:\u8FD9\u4E2A\u76EE\u5F55\u662F\u4EC0\u4E48\u3001\u6709\u54EA\u4E9B\u65E2\u5B9A\u7EA6\u675F\u3001\u4F60\u51C6\u5907\u6309\u4EC0\u4E48\u5DE5\u4F5C\u6D41\u5F00\u53D1;\u7136\u540E\u5411\u6211\u63D0\u51FA\u4F60\u9700\u8981\u6F84\u6E05\u7684\u95EE\u9898",
     "",
     "\u6211\u4F1A\u5728\u4E0B\u4E00\u6761\u6D88\u606F\u91CC\u7ED9\u51FA\u9700\u6C42\u63CF\u8FF0\u3002\u5F00\u53D1\u7EA6\u675F(\u5168\u7A0B\u9002\u7528):",
     "\u9875\u9762\u8303\u5F0F\u7167 examples \u6284,\u4E0D\u6539 examples/ \u4E0E theme.ts;\u4E3B\u4EE3\u7801\u4E0D import \u793A\u4F8B\u533A;",
+    "\u56FE\u6807\u7528 WbIcon \u6309 glyph \u540D\u5F15\u7528(\u5148\u5230\u300C\u793A\u4F8B\xB7\u5DE5\u4F5C\u53F0 \u2192 \u56FE\u6807\u89C4\u8303\u300D\u641C),\u7981\u6B62 import @deepseek-ai/dsh-client-* \u4EFB\u4F55\u5305;",
     "\u6BCF\u4E2A\u65B0\u9875\u9762\u6CE8\u518C\u8FDB src/client.tsx \u7684 PANELS \u5E76\u5E26 .wb-page \u6839\u5BB9\u5668;",
-    "\u6BCF\u6B21\u6539\u5B8C\u8DD1 npm run guard && npm run build,\u5168\u7EFF\u624D\u7B97\u5B8C\u6210\u3002"
+    "\u6BCF\u6B21\u6539\u5B8C\u8DD1 npm run guard && npm run build,\u5168\u7EFF\u624D\u7B97\u5B8C\u6210;\u4EA4\u4ED8\u524D\u6309 AGENTS.md \u9A8C\u8BC1\u6E05\u5355\u8D70\u660E\u6697\u53CC\u4E3B\u9898\u4E0E UX \u81EA\u67E5\u3002"
   ].join("\n") : "";
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-page", children: [
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "tll-topbar", style: { paddingBottom: 0 }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-store-main", children: [
@@ -622,8 +624,8 @@ function ScaffoldPage() {
           result.name,
           " \xB7 \u63D2\u4EF6 id ",
           result.id,
-          " \xB7 \u7AEF\u53E3 ",
-          result.port
+          " \xB7 \u5B98\u65B9\u89C4\u8303\u968F\u884C ",
+          result.officialDocs ?? "\u2014"
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px dashed var(--tll-line)" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 13.5, fontWeight: 650, marginBottom: 8 }, children: "\u4E3B\u8DEF\u5F84:\u4EA4\u7ED9 AI \u5F00\u53D1" }),
@@ -776,8 +778,6 @@ function ScaffoldPage() {
         ] }, o.profile)) })
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(IconCopy, { size: 12 }) }),
-    "      ",
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(IconCopy, { size: 12 }) })
   ] });
 }

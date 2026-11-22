@@ -88,6 +88,13 @@ if (existsSync('src')) {
     }
     if (pkg.exports?.['./icon'] === undefined) fail('package.json 的 exports 漏了 ./icon(host-plugin.md 要求导出)')
     if (pkg.exports?.['./locale/*.json'] === undefined) fail('package.json 的 exports 漏了 ./locale/*.json(host-plugin.md 要求导出)')
+    // 依赖不变量(坑 #17):link 安装时依赖必须能从插件自己的真实路径解析——dependencies
+    // 非空会让 npm install 缺席的装法直接 ERR_MODULE_NOT_FOUND。骨架零 dependencies 是设计约束
+    const deps = Object.keys(pkg.dependencies ?? {})
+    if (deps.length > 0) {
+      warn(`dependencies 非空(${deps.join(' ')}):link 安装时 Node 按插件真实路径找 node_modules,`
+        + '没跑过 npm install 的目录会激活失败(坑 #17);运行时能力交给宿主 external 或 peer + start.sh 安装')
+    }
     if (failures === 0) ok('展示元数据齐全(locale meta + icon + files/exports 闭包)')
   }
 }

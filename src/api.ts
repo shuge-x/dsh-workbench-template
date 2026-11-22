@@ -7,7 +7,7 @@ export interface ApiScaffoldResult {
   target?: string
   name?: string
   id?: string
-  port?: number
+  officialDocs?: string
   files?: string[]
   nextSteps?: string[]
 }

@@ -256,13 +256,16 @@ export function apply(ctx) {
 | 17 | **本地 link 安装的依赖解析绕过 profile** → `Cannot find package 'x' imported from /path/to/plugin/index.js`(pnpm 步骤成功,但插件激活失败 `1 entry did not activate`) | `install_bundle` 对本地目录做 `link:` 安装,Node 按 ESM 的 **realpath** 向上找 `node_modules`,profile 的不在路上(同机实测:零依赖 link 插件 ✅ / registry 安装带依赖 ✅ / link 安装带依赖 ❌)。**先在插件目录 `npm install`**(start.sh 已自动做);registry 安装无此问题(pnpm 平铺进 profile)。`@deepseek-ai/dsh-tools` 在 npm 上(0.0.1-rc.1)远低于运行时,勿装成真实依赖——动态 import + try/catch(坑 #9)是正解 |
 | 18 | `defineTool` 可选参数写 `required: false` → 真实错误文案是 `JsonSchemaError: parameters.store.required must be true when present` | 可选参数**整个省略** `required` 字段;guard 已检查并带上这句原文,新增工具后 grep 一次 |
 | 19 | 生成的插件在 Plugins 页**没有标题/描述/图标**(缺 `locale/*.json` 的 `meta.title`/`meta.description` 与 `icon.svg`) | `files` 必须含 `locale/*.json` 与 `icon.svg`;`exports` 必须导出 `./locale/*.json` 与 `./icon`(官方 host-plugin.md 清单);缺失时官方回落到 package.json 的 name/description 与默认占位图。图标按 artwork.md 画:36×36 viewBox、字标用路径不用 `<text>`、不画底板 |
+| 20 | 函数插件漏 `export const inject = [...]` → `cannot get property "sessionProjections" without inject`;**import 成功、插件启动后才炸**(运行到那一行才抛) | 消费哪个 face 就在 `inject` 里声明哪个(`['slots','locale','sessionProjections','tools']`);错误文案本身会教你缺什么。类插件用 `static inject = [...]`(实战出处:dsh-plugin-field-notes.md 错误 2) |
 
 ---
 
 ## 8. 验证工作流
 
 1. **service 层先行**:`node -e "import('./service/api.mjs')…"` 直测每个查询函数的返回形状(不等 UI)
-2. **boot 验证**:重启后 grep 日志(数据服务就绪 / 已注册 N 个工具 / JsonSchemaError)
+2. **boot 验证**:重启后 grep 日志(数据服务就绪 / 已注册 N 个工具 / JsonSchemaError);
+   本地 link 插件的改动用 `plugin_manager set_bundle <名> enabled=false` → `enabled=true` 关开重载,
+   每次 `application` 结果明确可见(field-notes §4)
 3. **页面断言**:优先 **DOM evaluate 断言**(取 `.hero .value` 文本、表格行数、首个单元格)而非截图——大数据 SVG 页面截图像素管线可能出伪影,DOM 永远是真值
 4. **打包验证**:`npm pack` → `dsh plugin --profile <临时> add ./x.tgz` → 起一次看日志 → 清理
 5. **agent 闭环**:`curl`/直测工具函数 → 看注册日志 → 配 Key 后在聊天里问一个必须用工具才能答的问题(如"XX店昨天卖了多少")
@@ -272,6 +275,9 @@ export function apply(ctx) {
 9. **状态自检**(探针工具):若插件维护了内部状态(计数、缓存、投影),注册一个"读状态"的工具,
    让 agent 直接断言数值——而不是靠肉眼看 UI。数值偏大但看着合理 = fork 守卫或继承边界出了问题
    (§11 session projection 行的静默坑就是这么抓出来的)
+10. **诚实边界**(官方 plugin-development.md:"installation and slot registration alone do not
+    establish what the user sees"):注册成功 ≠ 用户看得见。introspection 能证明"注册成功+数值正确",
+    "用户真的看到"必须浏览器实测——报告验证结论时把这两层分开说(field-notes §6)
 
 ---
 
@@ -300,6 +306,12 @@ export function apply(ctx) {
 
 反面教材(裁决程序发明前的糊涂账):红线 #5 曾要求 import 官方图标包挂 sprite——后来核实
 practices.md「插件不得 require/load Harness Client 包」才反转成 vendored 方案;早入册早免疫。
+
+**裁决程序实例(2026-11-22 首次完整走通)**:外部评审(dsh-workbench-template-review-prompt.md,9 条发现)
+→ 整改(8 条采纳,2 条以官方规范原文反证推翻:icon 照抄违反 artwork.md 三条、sync-shared 是
+休眠死机制)→ 评审方独立复核认账两处、反抓整改两处遗留(§11 残留行、projection 检查漏扫 Host 半区)
+→ 全部闭合(9581418)。经验:①评审与整改互核时,裁决程序第 1 步「回代码/官方原文核实」双方都要做,
+引用转述不算证据;②整改方修措辞时要 grep 机制名而非只 grep 措辞。
 
 ---
 
@@ -358,9 +370,11 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 | **skeleton 唯一源**(镜像机制已退役) | ✅ | — | 根仓 src/ 是生成器自己的 ScaffoldPage 应用,**不消费** theme/examples——无同步无比对(旧 `sync-shared.mjs` 方向描述失实、pairs 含已删文件、真跑必崩,2026-11-22 退役);防漂移靠唯一源纪律:改 skeleton 即改源。主代码 import 示例区直接 fail(guard 边界) |
 | **tsc 静态引用检查**(guard 内置) | ✅ | `tsconfig.json`(lenient) | esbuild 不查标识符引用(坑 #15);骨架零 client 包运行时依赖后,自维护类型面(vendor.d.ts)已随之退役 |
 | **插件数据目录**(升级不丢数据) | ✅ | `skeleton/service/db.mjs` | 数据落 `<profile根>/data/<包名>/`(向上找 dsh.profile 标记推导)——GitHub/npm 安装的包目录在 update 时会被整体替换,数据放包内=升级即清空;link 安装回退包内。表结构演进用 PRAGMA user_version + 迁移步骤,勿裸改 CREATE TABLE |
-| **session projection**(会话派生状态) | ⬜ 未验证 | 官方 `packages/interaction/action-cards` | Host 半区 `ctx.sessionProjections.register({key,stateVersion,stateSchema,init,apply,wire})`;`apply` 纯+同步,不关心的事件返回同一引用;`state` 必须 plain JSON;**fork 守卫必须加**:`init` 存下 `inheritedEventCount`,`apply` 首行 `if (event.seq < state.inheritedEventCount) return state`(否则 fork 会话把父历史算成自己的,静默偏大不报错);改折叠语义必须 bump `stateVersion`;客户端 `useProjection(key)` 读成品值不折叠事件;⚠️ `main` 插槽的 `standardProps` **没有** `useProjection`(只有 `sidebar.right.pane.tab` 等有,cordis_inspect 实测) |
+| **session projection**(会话派生状态) | ⬜ 未验证 | 官方 `packages/interaction/action-cards` | Host 半区 `ctx.sessionProjections.register({key,stateVersion,stateSchema,init,apply,wire})`;`apply` 纯+同步,不关心的事件返回同一引用;`state` 必须 plain JSON;**fork 守卫必须加**:`init` 存下 `inheritedEventCount`,`apply` 首行 `if (event.seq < state.inheritedEventCount) return state`(否则 fork 会话把父历史算成自己的,静默偏大不报错);改折叠语义必须 bump `stateVersion`;客户端 `useProjection(key)` 读成品值不折叠事件;`stateSchema`/`viewSchema` 必须是真 zod(擦除契约只要 `parse()`,但手搓假 schema 在冷读/导出路径炸);key 从未发布时 `useProjection` 读到 `undefined`——是值不是错误,组件可先订阅后等值;⚠️ `main` 插槽的 `standardProps` **没有** `useProjection`(只有 `sidebar.right.pane.tab` 等有,cordis_inspect 实测) |
 | **右侧栏 tab 类型**(`sidebarRightTabs`) | ⬜ 未验证(工具箱已用,骨架未入示例) | `dsh-ai-toolbox` `src/client.tsx` | `ctx.sidebarRightTabs.register({id,kind,title,guide})` 注册**类型**,再往 `sidebar.right.pane.tab` / `.title` 两个 keyed 槽注册 body/title(key = type 的 id);⚠️ **`guide` 省略 = 不上 guide 页 = 界面打不开**(官方源码注 "Omit to stay off it",注册仍报 success) |
 | **探针工具**(自检模式) | ✅ 建议采用 | 本仓 `wbt_scaffold` / `wbt_uninstall` | 给插件注册一个"读内部状态"的工具,让 agent 直接断言数值而非肉眼看 UI——能抓出静默 bug(数值看着合理但偏大);见 §8 第 9 条 |
+| **零构建双面包**(纯 JS 手写产物形态) | ✅ | 实战 `dsh-session-inspector`(279 行)+ 官方 `templates/decoration` | 无 src/lib/构建配置,`index.js`/`client.js` 直接是出货形态;client 侧无 JSX 转换,用 `React.createElement`;不需要 TS/JSX 时这是最短路径(实战出处:dsh-plugin-field-notes.md §3) |
+| **本地插件重载手法**(`set_bundle` 关→开) | ✅ | 实战验证 | 比 `install_bundle` 更可控(不重跑 pnpm),每次 `application` 结果明确可见;本地 link 插件改代码后 关→开 触发 Loader 重算(实战出处:field-notes §4) |
 | **图标命名:npm 镜像与运行时不同步** | 🔶 | 实测(dsh-ai-toolbox) | npm 发布包 62 个唯一图形 vs 运行时 seed 表 96+,命名不一致——选图标以**运行时实测**为准(在浏览器里枚举),npm 文档仅参考 |
 | **V8 新版 SyntaxError 不带 position** | 🔶 | dev-toolbox JsonFormatter | Node 24/V8 新版错误对象无 position 字段,行号反推失效——兜底方案:递归下降结构扫描器(只定位不建值) |
 | **插件级 Config + locale**(示范已入骨架) | ✅ | `skeleton/index.js`(Config)+ `skeleton/src/locales.ts` | Config=Schema.object → apply(ctx, config) 第二参;locale=inject 'locale' + ctx.locale.register/bind 经 inject face 下发 t;**配置表单 UI 需自绘**(plugins.row.config 插槽,契约见 AGENTS.md) |
