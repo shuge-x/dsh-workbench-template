@@ -72,6 +72,8 @@ export async function scaffoldProject({ target, name, id } = {}) {
     ['myworkbench', i],
   ])
   replaceIn(join(t, 'src', 'client.tsx'), [['dsh-myworkbench', n], ['my-workbench', i]])
+  // theme.ts 的 PKG 常量(sprite 命名空间化用)也随包名改
+  replaceIn(join(t, 'src', 'theme.ts'), [['dsh-myworkbench', n]])
 
   // 官方规范随行:骨架已内置快照(docs/official/dsh-doc/,随上面 cpSync 一起落地),
   // 这里尝试从 GitHub 升级到与本机 dsh 版本对齐的官方版;失败保留快照(VERSION.txt 如实标注)

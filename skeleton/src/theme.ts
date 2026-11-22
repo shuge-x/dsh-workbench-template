@@ -13,6 +13,10 @@
 import { ICON_GLYPHS } from './design/icons-data'
 import type { DshClientContext } from './shim'
 
+/** 包名(scaffold 生成时自动改名):sprite 等文档级挂载物按包名命名空间化——
+ *  多个工作台插件共存于同一 profile 时,幂等守卫与卸载清理互不误伤(坑 #16)。 */
+const PKG = 'dsh-myworkbench'
+
 export const THEME_CSS = String.raw`
 .wb-page {
   --wb-bg: #f3f1ea;
@@ -130,10 +134,12 @@ export const THEME_CSS = String.raw`
  */
 export function mountIconSprite(ctx: DshClientContext): void {
   ctx.effect(() => {
-    if (document.querySelector('[data-wb-icon-sprite]')) return
+    // 按包名命名空间化:只认自己的 sprite(别的插件挂的与本插件无关),卸载只拆自己挂的
+    const attr = `data-wb-icon-sprite-${PKG}`
+    if (document.querySelector(`[${attr}]`)) return
     const NS = 'http://www.w3.org/2000/svg'
     const svg = document.createElementNS(NS, 'svg')
-    svg.setAttribute('data-wb-icon-sprite', '')
+    svg.setAttribute(attr, '')
     svg.setAttribute('aria-hidden', 'true')
     svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'
     const parser = new DOMParser()
