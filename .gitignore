@@ -3,3 +3,6 @@ service/data/
 *.log
 .DS_Store
 *.tgz
+
+skeleton/client.js
+skeleton/package-lock.json
