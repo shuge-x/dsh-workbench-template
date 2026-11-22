@@ -40,11 +40,14 @@ const stubPath = join(tmp, 'stub.mjs')
 writeFileSync(stubPath, stub)
 
 // 收集页面文件 → 生成入口
-const groups = [
-  ['pages', join(repo, 'src/pages'), readdirSync(join(repo, 'src/pages')).filter(f => f.endsWith('.tsx'))],
-  ['examples', join(repo, 'src/examples'), existsSafe(join(repo, 'src/examples')) ? readdirSync(join(repo, 'src/examples')).filter(f => /^.*Page\.tsx$/.test(f)) : []],
-]
 function existsSafe(p) { try { readdirSync(p); return true } catch { return false } }
+const groups = []
+if (existsSync(join(repo, 'src/pages'))) {
+  groups.push(['pages', join(repo, 'src/pages'), readdirSync(join(repo, 'src/pages')).filter(f => f.endsWith('.tsx'))])
+}
+if (existsSafe(join(repo, 'src/examples'))) {
+  groups.push(['examples', join(repo, 'src/examples'), existsSafe(join(repo, 'src/examples')) ? readdirSync(join(repo, 'src/examples')).filter(f => /^.*Page\.tsx$/.test(f)) : []])
+}
 
 const imports = []
 const calls = []

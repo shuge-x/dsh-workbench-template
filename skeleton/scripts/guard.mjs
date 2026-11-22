@@ -23,18 +23,23 @@ if (failures === 0) ok('工具参数无 required: false(坑 #1)')
 
 // 坑 #14
 // ConfigPage 等插槽视图渲染在插件管理页里,不是主面板,不要求页根
-const pageFiles = readdirSync('src/pages').filter(f => f.endsWith('.tsx') && f !== 'ConfigPage.tsx')
-for (const f of pageFiles) {
-  const s = readFileSync(join('src/pages', f), 'utf8')
-  if (!/className=\{?["'`]wb-page[\s"'`}]/.test(s) && !s.includes('wb-page')) {
-    fail(`${f} 缺 .wb-page 根容器(坑 #14)`)
+// 固件态:src/pages 可为空(零面板固件)——目录缺失时跳过页面级检查
+if (!existsSync('src/pages')) {
+  ok('固件态:无已注册页面(开工 AI 按 AGENTS.md 工作流创建)')
+} else {
+  const pageFiles = readdirSync('src/pages').filter(f => f.endsWith('.tsx') && f !== 'ConfigPage.tsx')
+  for (const f of pageFiles) {
+    const src = readFileSync(join('src/pages', f), 'utf8')
+    if (!/className=\{?["'`]wb-page[\s"'`\}]/.test(src) && !src.includes('wb-page')) {
+      fail(`${f} 缺 .wb-page 根容器(坑 #14)`)
+    }
   }
+  if (failures === 0) ok(`页面根容器 .wb-page 齐全(${pageFiles.length} 个,坑 #14)`)
 }
-if (failures === 0) ok(`页面根容器 .wb-page 齐全(${pageFiles.length} 个)`)
 
 // 边界:主代码不得 import 示例区
 if (existsSync('src/examples')) {
-  const own = readdirSync('src/pages').filter(f => f.endsWith('.tsx'))
+  const own = existsSync('src/pages') ? readdirSync('src/pages').filter(f => f.endsWith('.tsx')) : []
   for (const f of own) {
     if (/from\s+['"].*(examples|\/examples)/.test(readFileSync(join('src/pages', f), 'utf8'))) {
       fail(`${f} import 了示例区——主代码与示例必须零耦合(删示例要能全绿)`)

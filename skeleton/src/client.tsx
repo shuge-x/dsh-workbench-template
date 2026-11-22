@@ -14,7 +14,6 @@ import { VARIANT_CSS, applyVariant } from './design/switcher'
 import { dicts, NS_HOME } from './locales'
 import { CSS } from './styles'
 import { BrandMark, BrandName } from './brand'
-import { HomePage } from './pages/HomePage'
 import { ConfigPage } from './pages/ConfigPage'
 import { IconHome } from './icons'
 import { attachExamples } from './examples' // ← 示例区唯一 import;删除示例时连本行一起删
@@ -24,8 +23,12 @@ const SHOW_EXAMPLES = false
 
 export const inject = ['slots', 'locale']
 
+/**
+ * 面板注册表:按业务需求增删行(页面范式照 src/examples/ 抄,注册模式见本文件与 AGENTS.md)。
+ * 固件不预置任何面板——信息架构是开工 AI 与用户的设计决定。
+ */
 const PANELS: { id: string; title: string; order: number; Icon: (p: { size?: number }) => ReactNode; page: () => ReactNode }[] = [
-  { id: 'wb-home', title: '首页', order: -20, Icon: IconHome, page: HomePage },
+  // 示例:{ id: 'wb-home', title: '首页', order: -20, Icon: IconHome, page: HomePage }
 ]
 
 export function apply(ctx: DshClientContext): void {
