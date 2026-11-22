@@ -78,6 +78,13 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 4. 要真数据:`service/api.mjs` 加查询函数 → `index.js` 的 `routes` 加路由 → `src/api.ts` 加 fetch → 页面调用
 5. 每个取数页面**四态备齐**:加载(骨架屏)/ 空态(给下一步动作)/ 错误(带重试)/ 无权限(明确提示)
 6. 完成门禁:`npm run guard && npm run build` 全绿才算完成
+7. 交付前验证清单(对齐官方 docs/official/dsh-doc/references/verification.md,硬项不是可选项):
+   - 起实例用 `./start.sh`(自动打印带 token 的地址,不要自己猎 token);
+     看日志确认无槽位注册报错、无 slot entry 崩溃
+   - **明暗双主题各过一轮**:默认(wb)与暗色变体(terminal)下分别做页面 DOM 断言
+     ——wb- tokens 偏离登记册已声明明暗由 DESIGN.md 自担,实测就是兑现方式
+     (切换器在页面顶栏,属用户操作;AI 验证可在代码里临时 applyVariant('terminal') 后还原)
+   - UX 自查一轮:按 DESIGN.md 的 Do/Don't 过空态/焦点/对比度/禁用态(官方要求 expert review 的落地形态);最终视觉验收归用户
 
 ## 默认策略(直接按默认执行,不要作为澄清问题提出)
 

@@ -246,6 +246,9 @@ export function apply(ctx) {
 3. **页面断言**:优先 **DOM evaluate 断言**(取 `.hero .value` 文本、表格行数、首个单元格)而非截图——大数据 SVG 页面截图像素管线可能出伪影,DOM 永远是真值
 4. **打包验证**:`npm pack` → `dsh plugin --profile <临时> add ./x.tgz` → 起一次看日志 → 清理
 5. **agent 闭环**:`curl`/直测工具函数 → 看注册日志 → 配 Key 后在聊天里问一个必须用工具才能答的问题(如"XX店昨天卖了多少")
+6. **明暗双主题**(官方 verification.md 硬项):页面在默认(wb)与暗色变体(terminal)下各过一轮 DOM 断言——wb- tokens 偏离登记册声明了明暗由 DESIGN.md 自担,实测即兑现方式
+7. **UX 评审**(官方要求 expert review):AI 按 DESIGN.md Do/Don't 自查空态/焦点/对比度/禁用态;最终视觉验收归用户
+8. **认证访问**:验证页面一律走日志里带 token 的地址(start.sh 会直接打印),不猎 token、不配免认证
 
 ---
 

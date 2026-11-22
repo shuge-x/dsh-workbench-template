@@ -33,6 +33,7 @@
     "guard": "node scripts/guard.mjs",
     "smoke": "node scripts/smoke-render.mjs",
     "sync-official": "node service/fetch-official.mjs skeleton/docs/official/dsh-doc",
+    "vendor-icons": "node scripts/vendor-icons.mjs",
     "prepack": "npm run guard && npm run smoke && node build.mjs"
   },
   "peerDependencies": {
