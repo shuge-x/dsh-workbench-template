@@ -16,6 +16,7 @@ index.js            Host 半区:webServer 前缀路由 /wb-api/*(同源数据服
                       (契约:form.getSnapshot/set/subscribe,view='summary'|'page';
                        参考实现:样板仓库主分支 main:src/pages/ConfigPage.tsx)
 service/            数据层:api.mjs(查询函数)/ db.mjs(SQLite)/ seed.mjs(首启造数)
+                    + session-stats.mjs(会话联动固件:projection + 探针工具 wb_session_stats)
 src/client.tsx      Client 半区唯一 dsh 耦合点:PANELS 注册面板 + locale 字典注册(esbuild 单文件 bundle)
 src/locales.ts      本地化命名空间(zh/en 键一致);页面经 inject face 的 t() 取词
 src/theme.ts        设计系统实现:wb- tokens + 基础组件类 + 官方图标 sprite 挂载(共享资产)
@@ -23,7 +24,7 @@ design/             ★ 设计语言库:多套 DESIGN 变体(默认工作台中�
                     换肤 = 选一份覆盖根目录 DESIGN.md + 让 AI 按其 tokens 更新 theme.ts
 src/api.ts          前端请求层:同源 fetch 封装(get/post/stream)
 src/pages/          ★ 你的业务页面(主代码,长期演进;首页起步页刻意空白,业务从零填充)
-src/examples/       示例区:9 个范式页(教学代码)。源码常驻供 AI 阅读,但默认不注册进侧栏
+src/examples/       示例区:9 个范式页 + 会话联动 tab(教学代码)。源码常驻供 AI 阅读,但默认不注册进侧栏
                     ——要看渲染效果把 src/client.tsx 的 SHOW_EXAMPLES 置 true;可整体删除
 docs/EXAMPLES.md    范式索引 + 红线映射表(AI 开发先读它)
 docs/official/      官方规范随行:dsh-doc 技能全文(SKILL.md 入口 + references/ 17 篇 + templates/)。

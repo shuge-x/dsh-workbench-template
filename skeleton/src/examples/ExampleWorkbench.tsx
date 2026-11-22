@@ -16,6 +16,7 @@ import { IconsPage } from './IconsPage'
 import { MapPage } from './MapPage'
 import { StreamAiPage } from './StreamAiPage'
 import { EXAMPLES_CSS } from './styles'
+import { attachSessionLinkageTab } from './SessionLinkageTab'
 
 const TABS: { key: string; label: string; page: () => ReactNode }[] = [
   { key: 'overview', label: '总览', page: OverviewPage },
@@ -44,6 +45,8 @@ export function attachExamples(ctx: DshClientContext): void {
     document.head.append(style)
     return () => { style.remove() }
   }, 'wb-examples: styles')
+
+  attachSessionLinkageTab(ctx) // 会话联动 tab(右侧栏;红线 #10:guide 必给)
 
   ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: EXAMPLES_META.panelId }, ExamplePanel))
   ctx.slots.inject('sidebar.panellist', () => ctx.slots.register(

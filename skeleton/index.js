@@ -11,6 +11,7 @@
 import { regionSummary, latest } from './service/api.mjs'
 import { getDb } from './service/db.mjs'
 import { streamChat } from './service/ai.mjs'
+import { registerSessionStats, SESSION_STATS_KEY } from './service/session-stats.mjs'
 import Schema from '@deepseek-ai/schemastery'
 
 /**
@@ -30,9 +31,11 @@ const PREFIX = '/wb-api'
 
 
 /** dsh 插件入口。 */
-export const inject = ['tools', 'webServer', 'connection']
+// 坑 #20:消费哪个 face 就必须在这里声明哪个——漏了会在运行到那一行时才抛
+// 'cannot get property "sessionProjections" without inject'(import 成功、插件启动后才炸)
+export const inject = ['tools', 'webServer', 'connection', 'sessionProjections']
 
-export function apply(ctx, config) {
+export async function apply(ctx, config) {
   getDb() // 首启自动建库造数
 
 const routes = {
@@ -104,6 +107,11 @@ const routes = {
   }), 'myworkbench: /wb-api routes')
 
   console.log('[wb-data] /wb-api 路由已挂载(同源)')
+
+  // 会话联动固件:session projection + 探针工具(机制详见 service/session-stats.mjs 头注释;
+  // 客户端读取示范在 src/examples/SessionLinkageTab.tsx,SHOW_EXAMPLES 开启后右侧栏可见)
+  await registerSessionStats(ctx, defineTool)
+  console.log(`[wb-data] 会话统计投影已注册(${SESSION_STATS_KEY},fork 守卫在位)`)
 
   // agent 工具。
   if (defineTool === undefined) {

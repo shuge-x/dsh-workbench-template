@@ -36,7 +36,7 @@ npx @deepseek-ai/dsh plugin --profile <你的profile> update dsh-workbench-templ
 
 ## 这套体系是什么
 
-本仓库是 **dsh 工作台样板工程的可发布形态**:骨架唯一源 + 五件套门禁(红线/边界/tsc/渲染冒烟)+ AI 手册
+本仓库是 **dsh 工作台样板工程的可发布形态**:骨架唯一源 + guard 门禁(红线/边界/元数据/随行/包禁令/token 纪律/tsc/冒烟/语法)+ AI 手册
 + 官方规范随行(生成项目自带 dsh-doc)+ 治理框架(三层规则金字塔 + 偏离登记册)+ 官方图形 vendored。
 完整的「重数据 BI 示范」(单店经营:SQLite 35 万行 + agent 工具 + AI 流式解读)见
 [dsh-workbench-sample](https://github.com/shuge-x/dsh-workbench-sample)。

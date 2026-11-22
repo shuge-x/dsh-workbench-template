@@ -35,6 +35,7 @@
 | 表单/设置页 | `FormPage.tsx` | 表单结构、校验前置、提交中禁用、成功/失败反馈 |
 | 数据加载状态 | `StatesPage.tsx` | 骨架屏、空态给动作、错误带重试、无权限说明 |
 | 找图标/查样式 | `IconsPage.tsx` | 官方图形浏览器(106×2 权重)、标签胶囊、按钮三态 |
+| 会话联动(右侧栏 tab + 投影) | `SessionLinkageTab.tsx` + `service/session-stats.mjs` | 两阶段注册 / guide 必给(红线 #10)/ useProjection 读成品值 / fork 守卫 / 探针工具 wb_session_stats |
 | 区域地图页 | `MapPage.tsx` | Web Mercator 投影、SVG 区域着色、HTML 覆盖层标签(坑 #2)、点击联动 |
 | AI 流式输出页 | `StreamAiPage.tsx` | POST SSE 解析 data: 帧、逐字渲染+光标、AbortController 中止、显式降级 |
 

@@ -21,7 +21,9 @@ import { attachExamples } from './examples' // ← 示例区唯一 import;删除
 /** 示例面板开关:默认关(业务侧栏只放你的面板);要看渲染效果改 true。 */
 const SHOW_EXAMPLES = false
 
-export const inject = ['slots', 'locale']
+// sidebarRightTabs/sidebarRight 供示例区的会话联动 tab 使用(SHOW_EXAMPLES 门内);
+// faces 在壳里常驻,声明在前不等待、用到才消费(坑 #20:消费哪个就声明哪个)
+export const inject = ['slots', 'locale', 'sidebarRightTabs', 'sidebarRight']
 
 /**
  * 面板注册表:按业务需求增删行(页面范式照 src/examples/ 抄,注册模式见本文件与 AGENTS.md)。
