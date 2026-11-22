@@ -257,6 +257,7 @@ export function apply(ctx) {
 | 18 | `defineTool` 可选参数写 `required: false` → 真实错误文案是 `JsonSchemaError: parameters.store.required must be true when present` | 可选参数**整个省略** `required` 字段;guard 已检查并带上这句原文,新增工具后 grep 一次 |
 | 19 | 生成的插件在 Plugins 页**没有标题/描述/图标**(缺 `locale/*.json` 的 `meta.title`/`meta.description` 与 `icon.svg`) | `files` 必须含 `locale/*.json` 与 `icon.svg`;`exports` 必须导出 `./locale/*.json` 与 `./icon`(官方 host-plugin.md 清单);缺失时官方回落到 package.json 的 name/description 与默认占位图。图标按 artwork.md 画:36×36 viewBox、字标用路径不用 `<text>`、不画底板 |
 | 20 | 函数插件漏 `export const inject = [...]` → `cannot get property "sessionProjections" without inject`;**import 成功、插件启动后才炸**(运行到那一行才抛) | 消费哪个 face 就在 `inject` 里声明哪个(`['slots','locale','sessionProjections','tools']`);错误文案本身会教你缺什么。类插件用 `static inject = [...]`(实战出处:dsh-plugin-field-notes.md 错误 2) |
+| 21 | `defineTool` 的 `parameters` 传 JSON Schema 全对象(`{type:'object',…}`)→ `JsonSchemaError: parameters.type must be a value schema object`,**整个 Host entry 激活失败、已注册的面(投影等)一并回滚**——症状是"客户端活着、Host 全死、怎么聊都没数据" | npm 版 defineTool 的 `parameters` 是**逐属性映射 spec**(`{参数名:{type,description}}`,parameterSchemaSpecToJsonSchema 编译);无参工具写 `parameters: {}`;确需完整 JSON Schema 就绕过 defineTool 直接 `ctx.tools.register`(实战 session-inspector 形态)。guard 有毒形态检查。**附:现场自愈实录**——link 安装的项目改文件即触发官方 file-change reload(2026-11-23 实测:agent 自己改对了注册代码,保存后全链路自动恢复,新老会话数据齐活) |
 
 ---
 

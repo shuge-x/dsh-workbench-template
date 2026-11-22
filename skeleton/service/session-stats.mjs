@@ -103,7 +103,12 @@ export function sessionStatsProbe(defineTool, handle) {
   return defineTool({
     name: 'wb_session_stats',
     description: 'Read this workbench session-stats projection for the CURRENT session (turns/steps/tool calls/messages). Probe tool: assert the projection folds correctly — numbers silently too large usually mean a missing fork guard.',
-    parameters: { type: 'object', additionalProperties: false, properties: {} },
+    // ★ parameters 是「属性映射」(参数名 → 值 schema),不是 JSON Schema 对象(坑 #21)。
+    //   写成 { type: 'object', ... } 会被编译成"名为 type 的参数",报
+    //   "parameters.type must be a value schema object" 并让整个 Host entry 激活失败
+    //   (已注册的投影也会被一起回滚)。无参工具的已知好形态就是 parameters: {};
+    //   确需完整 JSON Schema 时绕过 defineTool,直接 ctx.tools.register(实战 session-inspector 形态)。
+    parameters: {},
     output: {
       schema: { type: 'object', additionalProperties: true },
       render: (_args, value) => [{ type: 'text', text: JSON.stringify(value, null, 2) }],
