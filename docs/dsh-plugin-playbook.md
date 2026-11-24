@@ -303,7 +303,9 @@ export function apply(ctx) {
 ## 8. 验证工作流
 
 1. **service 层先行**:`node -e "import('./service/api.mjs')…"` 直测每个查询函数的返回形状(不等 UI)
-2. **boot 验证**:`./start.sh` 结尾自带激活判定(`scripts/activation-verdict.sh`:✓ 已激活 / ✗ 激活失败并以非零退出 / ⚠ 无法判定)——**拿到地址不等于插件活着**;之后改了 Host 半区再 grep 日志(数据服务就绪 / 已注册 N 个工具 / JsonSchemaError);
+2. **boot 验证**:`./start.sh` 结尾自带激活判定(`scripts/activation-verdict.sh`:✓ 已激活 / ✗ 激活失败并以非零退出 / ⚠ 无法判定)——**拿到地址不等于插件活着**
+   (2026-11-25 真机实测三条路径:正常 → ✓、退出 0;Host 模块用了未导入的标识符 → ✗ 并给出
+   `抛错位置: service/api.mjs:22:29`、退出 1;改对后重跑 → ✓);之后改了 Host 半区再 grep 日志(数据服务就绪 / 已注册 N 个工具 / JsonSchemaError);
    本地 link 插件的改动用 `plugin_manager set_bundle <名> enabled=false` → `enabled=true` 关开重载,
    每次 `application` 结果明确可见(field-notes §4)
 3. **页面断言**:优先 **DOM evaluate 断言**(取 `.hero .value` 文本、表格行数、首个单元格)而非截图——大数据 SVG 页面截图像素管线可能出伪影,DOM 永远是真值

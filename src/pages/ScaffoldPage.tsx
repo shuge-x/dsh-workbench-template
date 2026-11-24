@@ -160,7 +160,7 @@ export function ScaffoldPage(): ReactNode {
               <div style={{ fontSize: 12.5, color: 'var(--tll-ink2)', lineHeight: 1.9, marginBottom: 10 }}>
                 ① 用 ClaudeCode / Codex / OpenCode 打开项目目录<br />
                 ② 粘贴下方「首次会话提示词」——构建、门禁、开发迭代全部由 AI 按 AGENTS.md 执行,你不需要手动敲命令<br />
-                ③ 想在浏览器里看效果:直接让 AI 运行 <code>./start.sh</code>
+                ③ 想在浏览器里看效果:运行 <code>./start.sh</code>——你自己跑或让 AI 跑都可以
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                 <span style={{ fontSize: 13.5, fontWeight: 650 }}>首次会话提示词</span>
@@ -179,8 +179,8 @@ export function ScaffoldPage(): ReactNode {
 
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed var(--tll-line)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <span style={{ fontSize: 13.5, fontWeight: 650 }}>可选:自己在 dsh 里预览运行</span>
-                <span style={{ fontSize: 12, color: 'var(--tll-ink2)' }}>一条命令,自动完成 构建/初始化/登记/启动,并给出激活判定;实例在后台运行。想让 AI 代跑也可以</span>
+                <span style={{ fontSize: 13.5, fontWeight: 650 }}>可选:在 dsh 里预览运行</span>
+                <span style={{ fontSize: 12, color: 'var(--tll-ink2)' }}>给你人工控制用的一键脚本:构建/初始化/登记/启动,并给出激活判定;实例在后台运行。AI 用不用它不受限制</span>
                 <button
                   className="tll-pill-btn" style={{ marginLeft: 'auto' }}
                   onClick={() => { void navigator.clipboard?.writeText(`cd ${result.target ?? ''} && ./start.sh`).catch(() => {}) }}

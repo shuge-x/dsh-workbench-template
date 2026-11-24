@@ -635,8 +635,9 @@ function ScaffoldPage() {
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("br", {}),
             "\u2461 \u7C98\u8D34\u4E0B\u65B9\u300C\u9996\u6B21\u4F1A\u8BDD\u63D0\u793A\u8BCD\u300D\u2014\u2014\u6784\u5EFA\u3001\u95E8\u7981\u3001\u5F00\u53D1\u8FED\u4EE3\u5168\u90E8\u7531 AI \u6309 AGENTS.md \u6267\u884C,\u4F60\u4E0D\u9700\u8981\u624B\u52A8\u6572\u547D\u4EE4",
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("br", {}),
-            "\u2462 \u60F3\u5728\u6D4F\u89C8\u5668\u91CC\u770B\u6548\u679C:\u76F4\u63A5\u8BA9 AI \u8FD0\u884C ",
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("code", { children: "./start.sh" })
+            "\u2462 \u60F3\u5728\u6D4F\u89C8\u5668\u91CC\u770B\u6548\u679C:\u8FD0\u884C ",
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("code", { children: "./start.sh" }),
+            "\u2014\u2014\u4F60\u81EA\u5DF1\u8DD1\u6216\u8BA9 AI \u8DD1\u90FD\u53EF\u4EE5"
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "\u9996\u6B21\u4F1A\u8BDD\u63D0\u793A\u8BCD" }),
@@ -668,8 +669,8 @@ function ScaffoldPage() {
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px dashed var(--tll-line)" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "\u53EF\u9009:\u81EA\u5DF1\u5728 dsh \u91CC\u9884\u89C8\u8FD0\u884C" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12, color: "var(--tll-ink2)" }, children: "\u4E00\u6761\u547D\u4EE4,\u81EA\u52A8\u5B8C\u6210 \u6784\u5EFA/\u521D\u59CB\u5316/\u767B\u8BB0/\u542F\u52A8,\u5E76\u7ED9\u51FA\u6FC0\u6D3B\u5224\u5B9A;\u5B9E\u4F8B\u5728\u540E\u53F0\u8FD0\u884C\u3002\u60F3\u8BA9 AI \u4EE3\u8DD1\u4E5F\u53EF\u4EE5" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "\u53EF\u9009:\u5728 dsh \u91CC\u9884\u89C8\u8FD0\u884C" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12, color: "var(--tll-ink2)" }, children: "\u7ED9\u4F60\u4EBA\u5DE5\u63A7\u5236\u7528\u7684\u4E00\u952E\u811A\u672C:\u6784\u5EFA/\u521D\u59CB\u5316/\u767B\u8BB0/\u542F\u52A8,\u5E76\u7ED9\u51FA\u6FC0\u6D3B\u5224\u5B9A;\u5B9E\u4F8B\u5728\u540E\u53F0\u8FD0\u884C\u3002AI \u7528\u4E0D\u7528\u5B83\u4E0D\u53D7\u9650\u5236" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
               "button",
               {
