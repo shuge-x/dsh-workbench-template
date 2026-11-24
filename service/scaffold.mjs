@@ -3,7 +3,7 @@
  * 三个入口共用:根目录 CLI(scaffold.mjs)、HTTP 路由(/api/scaffold)、agent 工具(wbs_scaffold)。
  */
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
-import { dirname, isAbsolute, join, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { fetchOfficialDocs } from './fetch-official.mjs'
 
@@ -28,6 +28,19 @@ export function validateScaffoldArgs({ target, name, id, port } = {}) {
     return { error: `插件 id 不合法:${idStr}(须为小写字母开头的字母数字连字符)` }
   }
   return { target: t, name: nameStr, id: idStr }
+}
+
+/**
+ * 骨架目录里的本地产物不进生成项目:依赖目录与 .DS_Store 在任何层级都跳过;构建产物
+ * (client.js)、锁文件、遗留数据目录只在骨架根上跳过。它们不入库,但在本机存在——
+ * 不拦的话每个生成项目都会背上几百个文件的 node_modules,生成的文件清单也会虚高。
+ */
+function copyFromSkeleton(src) {
+  const rel = relative(SKELETON_DIR, src)
+  if (rel === '') return true // 骨架根自身
+  const base = basename(src)
+  if (base === 'node_modules' || base === '.DS_Store') return false
+  return !(dirname(rel) === '.' && /^(?:client\.js|package-lock\.json|data)$/.test(base))
 }
 
 function replaceIn(file, pairs) {
@@ -57,7 +70,7 @@ export async function scaffoldProject({ target, name, id } = {}) {
   }
 
   mkdirSync(t, { recursive: true })
-  cpSync(SKELETON_DIR, t, { recursive: true })
+  cpSync(SKELETON_DIR, t, { recursive: true, filter: copyFromSkeleton })
   // 规范随行:playbook 快照进生成项目(guard 报错与 AGENTS.md 都引用它,必须就地可查)
   const playbookSrc = join(SKELETON_DIR, '..', 'docs', 'dsh-plugin-playbook.md')
   if (existsSync(playbookSrc)) {
@@ -84,20 +97,19 @@ export async function scaffoldProject({ target, name, id } = {}) {
 
   // 官方规范随行:骨架已内置快照(docs/official/dsh-doc/,随上面 cpSync 一起落地),
   // 这里尝试从 GitHub 升级到与本机 dsh 版本对齐的官方版;失败保留快照(VERSION.txt 如实标注)
-  const logs = []
-  const officialDocs = await fetchOfficialDocs(join(t, 'docs', 'official', 'dsh-doc'), {
-    log: m => logs.push(m),
-  })
+  const officialDocs = await fetchOfficialDocs(join(t, 'docs', 'official', 'dsh-doc'), {})
+  const officialDocsNote = officialDocs.ok
+    ? `fetched ${officialDocs.ref}(${officialDocs.files} 个文件${officialDocs.version ? `;本机 dsh ${officialDocs.version}` : ''})`
+    // 落到快照时把逐条失败原因带出来:配额(403)该设 GITHUB_TOKEN,超时/抖动重跑即可
+    : `snapshot(抓取未升级:${officialDocs.reason};原因:${officialDocs.detail ?? '未知'})`
 
-  const files = listFiles(t).filter(f => f !== 'node_modules')
+  const files = listFiles(t)
   return {
     ok: true,
     target: t,
     name: n,
     id: i,
-    officialDocs: officialDocs.ok
-      ? `fetched ${officialDocs.ref}(${officialDocs.files} 个文件)`
-      : `snapshot(抓取未升级:${officialDocs.reason})`,
+    officialDocs: officialDocsNote,
     files,
     nextSteps: [
       `cd ${t}`,

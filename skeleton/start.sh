@@ -54,11 +54,19 @@ echo "[start] 启动(profile=$PROFILE port=$PORT)…"
 LOG="/tmp/dsh-$PROFILE.log"
 nohup $DSH --profile "$PROFILE" --no-open --port "$PORT" > "$LOG" 2>&1 &
 
-sleep 8
-TOKEN=$(grep -oE 'token=[A-Za-z0-9_-]*' "$LOG" | tail -1)
+# 等访问地址(最长 60 秒:首次运行 npx 可能较慢;固定 sleep 在慢机器上会误报失败)
+TOKEN=""
+N=0
+while [ -z "$TOKEN" ] && [ "$N" -lt 60 ]; do
+  sleep 1
+  N=$((N + 1))
+  TOKEN=$(grep -oE 'token=[A-Za-z0-9_-]*' "$LOG" 2>/dev/null | tail -1)
+done
 if [ -n "$TOKEN" ]; then
-  echo "[start] ✓ http://127.0.0.1:$PORT/?$TOKEN"
+  echo "[start] ✓ 实例已启动: http://127.0.0.1:$PORT/?$TOKEN"
   open "http://127.0.0.1:$PORT/?$TOKEN" 2>/dev/null || true
+  # 激活判定(坑 #21):拿到地址 ≠ 插件活着。Host 半区激活失败时这里报 ✗ 并以非零退出
+  sh scripts/activation-verdict.sh "$LOG" 10
 else
   echo "[start] ✗ 未拿到 token,查看日志:$LOG"
   exit 1

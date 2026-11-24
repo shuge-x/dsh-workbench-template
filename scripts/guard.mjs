@@ -15,11 +15,30 @@ const ok = (msg) => console.log(`[guard] ✓ ${msg}`)
 // 坑 #1
 const hostFiles = ['index.js', ...readdirSync('service').map(f => join('service', f))]
 for (const f of hostFiles) {
-  if (statSync(f).isFile() && readFileSync(f, 'utf8').includes('required: false')) {
+  if (!statSync(f).isFile()) continue
+  const src = readFileSync(f, 'utf8')
+  if (src.includes('required: false')) {
     fail(`${f} 含 required: false(坑 #1:可选参数整个省略 required 字段)`)
   }
+  if (/parameters:\s*\{\s*["']?type["']?\s*:\s*['"]/.test(src)) {
+    fail(`${f} 的 defineTool parameters 疑似 JSON Schema 全对象(坑 #21:parameters 是逐属性映射,无参工具用 {})`)
+  }
 }
-if (failures === 0) ok('工具参数无 required: false(坑 #1)')
+if (failures === 0) ok('工具参数契约(坑 #1 无 required: false / 坑 #21 无 JSON Schema 全对象)')
+
+// 展示元数据(官方 host-plugin.md 清单):生成器自己也要合规——Plugins 页读 locale 的 meta 与 icon
+for (const f of ['locale/en.json', 'locale/zh.json', 'icon.svg']) {
+  if (!existsSync(f)) fail(`缺 ${f}(Plugins 页的标题/描述/图标;官方 host-plugin.md 要求)`)
+}
+{
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
+  for (const pattern of ['locale/*.json', 'icon.svg']) {
+    if (!(pkg.files ?? []).includes(pattern)) fail(`package.json 的 files 漏了 ${pattern}`)
+  }
+  if (pkg.exports?.['./icon'] === undefined) fail('package.json 的 exports 漏了 ./icon')
+  if (pkg.exports?.['./locale/*.json'] === undefined) fail('package.json 的 exports 漏了 ./locale/*.json')
+  if (failures === 0) ok('展示元数据齐全(locale meta + icon + files/exports 闭包)')
+}
 
 // 坑 #14
 // ConfigPage 等插槽视图渲染在插件管理页里,不是主面板,不要求页根

@@ -27,7 +27,7 @@ src/pages/          ★ 你的业务页面(主代码,长期演进;首页起步�
 src/examples/       示例区:9 个范式页 + 会话联动 tab(教学代码)。源码常驻供 AI 阅读,但默认不注册进侧栏
                     ——要看渲染效果把 src/client.tsx 的 SHOW_EXAMPLES 置 true;可整体删除
 docs/EXAMPLES.md    范式索引 + 红线映射表(AI 开发先读它)
-docs/official/      官方规范随行:dsh-doc 技能全文(SKILL.md 入口 + references/ 17 篇 + templates/)。
+docs/official/      官方规范随行:dsh-doc 技能全文(SKILL.md 入口 + references/ 各篇 + templates/)。
                     生成时按本机 dsh 版本对齐抓取;抓不到时落骨架快照——以 VERSION.txt 标注的
                     来源与日期为准,它可能过期,机制疑问以运行中的 dsh 实际行为为最终事实
 scripts/guard.mjs   门禁:红线机器检查,发布前必过
@@ -35,7 +35,7 @@ scripts/guard.mjs   门禁:红线机器检查,发布前必过
 
 ## 必读顺序
 
-AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;references/ 17 篇按任务查——插件机制、UI 规则、工具设计、版本升级都在里面,**优先级高于本文件**:这里只是官方规则的投影与项目化)→ ② 读本文件(行为红线与默认策略)→ ③ 读 `DESIGN.md`(视觉契约与 Do/Don't)→ ④ 读 `docs/EXAMPLES.md`(范式索引)→ ⑤ 按 src/examples/ 源码抄范式。写 UI 前必读 DESIGN.md 的 Do/Don't。
+AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;references/ 按任务查——插件机制、UI 规则、工具设计、版本升级都在里面,**优先级高于本文件**:这里只是官方规则的投影与项目化)→ ② 读本文件(行为红线与默认策略)→ ③ 读 `DESIGN.md`(视觉契约与 Do/Don't)→ ④ 读 `docs/EXAMPLES.md`(范式索引)→ ⑤ 按 src/examples/ 源码抄范式。写 UI 前必读 DESIGN.md 的 Do/Don't。
 
 **规范源分层**:在 dsh 会话内开发时,以会话原生的 dsh-doc skill(随宿主版本,最新)为最优先;
 `docs/official/` 随行快照服务**外部**工具(ClaudeCode/Codex 等),可能滞后于你的会话——
@@ -90,8 +90,9 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 5. 每个取数页面**四态备齐**:加载(骨架屏)/ 空态(给下一步动作)/ 错误(带重试)/ 无权限(明确提示)
 6. 完成门禁:`npm run guard && npm run build` 全绿才算完成
 7. 交付前验证清单(对齐官方 docs/official/dsh-doc/references/verification.md,硬项不是可选项):
-   - 起实例用 `./start.sh`(自动打印带 token 的地址,不要自己猎 token);
-     看日志确认无槽位注册报错、无 slot entry 崩溃
+   - 起实例用 `./start.sh`(自动打印带 token 的地址,不要自己猎 token)。脚本结尾自带**激活判定**:
+     `✓ 插件 Host 半区已激活` 才算启动成功;`✗ 激活失败` 时脚本非零退出——**地址能打开不等于插件活着**
+     (数据服务/工具/投影可能全部不可用),按它打印的 diagnostic 修完重跑;之后再看日志确认无 slot entry 崩溃
    - **明暗双主题各过一轮**:默认(wb)与暗色变体(terminal)下分别做页面 DOM 断言
      ——wb- tokens 偏离登记册已声明明暗由 DESIGN.md 自担,实测就是兑现方式
      (切换器在页面顶栏,属用户操作;AI 验证可在代码里临时 applyVariant('terminal') 后还原)

@@ -218,13 +218,37 @@ try { ({ defineTool } = await import('@deepseek-ai/dsh-tools')) } catch { /* 独
 export function apply(ctx) {
   // …数据服务…
   if (defineTool === undefined) return
-  const tools = [ /* defineTool({ name, description, parameters, output, execute }) */ ]
+  const tools = [
+    defineTool({
+      name: 'wb_region_summary',
+      description: '查询工作台数据:按区域汇总的订单金额(最近 N 天)。回答"各区域情况/对比"时使用。数据是演示环境。',
+      // ★ parameters 是「逐属性映射」:键 = 参数名,值 = 该参数的 schema(坑 #21)。
+      //   它**不是** JSON Schema 对象——写成 { type: 'object', properties: {...} } 会被当成
+      //   "一个叫 type 的参数",整个 Host entry 激活失败(同文件的其余工具一起消失)。
+      //   无参工具就写 parameters: {}。
+      parameters: {
+        region: { type: 'string', description: '区域名;省略 = 全部' },        // 可选:整个省略 required 字段(坑 #1)
+        days: { type: 'integer', required: true, description: '最近 N 天' }, // 必填:required: true
+      },
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      async execute(args) { return JSON.stringify(await regionSummary(args)) },
+    }),
+  ]
   ctx.effect(() => {
     const disposers = tools.map(t => ctx.tools.register(t))
     return () => { for (const d of disposers) d() }
   }, 'wb: tools')
 }
 ```
+
+**`defineTool` 的参数契约**(源码 `dsh-tools/lib/index.js` 的 `parameterSchemaSpecToJsonSchema`):
+
+| 字段 | 契约 |
+|---|---|
+| `parameters` | 逐属性映射 `{ 参数名: { type, description?, required? } }`;`type` 取 `string / number / integer / boolean / null / array / object / json`,或用 `oneOf` |
+| `required` | 只有 `true` 合法;可选参数**整个省略**该字段 |
+| 失败形态 | 以上任一写错都是 `JsonSchemaError`,且是**整插件级**:fiberPhase 变 failed,同批注册的工具与投影一起消失——工具"不见了"先查插件管理器的 diagnostic |
+| 绕过 | 确需完整 JSON Schema(含 `additionalProperties` 等)时不用 defineTool,直接 `ctx.tools.register({ … })`(实战 session-inspector 形态) |
 
 - `inject = ['tools']` 让框架等工具注册表就绪
 - 工具 `execute` 直接调用 service 层查询函数——**agent 与 BI 页面同一数据源**,零重复
@@ -257,14 +281,14 @@ export function apply(ctx) {
 | 18 | `defineTool` 可选参数写 `required: false` → 真实错误文案是 `JsonSchemaError: parameters.store.required must be true when present` | 可选参数**整个省略** `required` 字段;guard 已检查并带上这句原文,新增工具后 grep 一次 |
 | 19 | 生成的插件在 Plugins 页**没有标题/描述/图标**(缺 `locale/*.json` 的 `meta.title`/`meta.description` 与 `icon.svg`) | `files` 必须含 `locale/*.json` 与 `icon.svg`;`exports` 必须导出 `./locale/*.json` 与 `./icon`(官方 host-plugin.md 清单);缺失时官方回落到 package.json 的 name/description 与默认占位图。图标按 artwork.md 画:36×36 viewBox、字标用路径不用 `<text>`、不画底板 |
 | 20 | 函数插件漏 `export const inject = [...]` → `cannot get property "sessionProjections" without inject`;**import 成功、插件启动后才炸**(运行到那一行才抛) | 消费哪个 face 就在 `inject` 里声明哪个(`['slots','locale','sessionProjections','tools']`);错误文案本身会教你缺什么。类插件用 `static inject = [...]`(实战出处:dsh-plugin-field-notes.md 错误 2) |
-| 21 | `defineTool` 的 `parameters` 传 JSON Schema 全对象(`{type:'object',…}`)→ `JsonSchemaError: parameters.type must be a value schema object`,**整个 Host entry 激活失败、已注册的面(投影等)一并回滚**——症状是"客户端活着、Host 全死、怎么聊都没数据" | npm 版 defineTool 的 `parameters` 是**逐属性映射 spec**(`{参数名:{type,description}}`,parameterSchemaSpecToJsonSchema 编译);无参工具写 `parameters: {}`;确需完整 JSON Schema 就绕过 defineTool 直接 `ctx.tools.register`(实战 session-inspector 形态)。guard 有毒形态检查。**定位与恢复**(2026-11-23 真机实测):插件管理器看 `fiberPhase: failed` + `diagnostic` 原文定位;爆炸半径=整插件(同文件其余工具一起消失);改对代码后经 plugin_manager disable→enable 重激(fiberPhase failed → active);link 目录文件变更触发官方 file-change reload 是另一条恢复路——两条都实测有效 |
+| 21 | `defineTool` 的 `parameters` 传 JSON Schema 全对象(`{type:'object',…}`)→ `JsonSchemaError: parameters.type must be a value schema object`,**整个 Host entry 激活失败、已注册的面(投影等)一并回滚**——症状是"客户端活着、Host 全死、怎么聊都没数据" | npm 版 defineTool 的 `parameters` 是**逐属性映射 spec**(`{参数名:{type,description}}`,parameterSchemaSpecToJsonSchema 编译);无参工具写 `parameters: {}`;确需完整 JSON Schema 就绕过 defineTool 直接 `ctx.tools.register`(实战 session-inspector 形态)。guard 有毒形态检查。**定位与恢复**(2026-11-23 真机实测):插件管理器看 `fiberPhase: failed` + `diagnostic` 原文定位;爆炸半径=整插件(同文件其余工具一起消失);改对代码后经 plugin_manager disable→enable 重激(fiberPhase failed → active);link 目录文件变更触发官方 file-change reload 是另一条恢复路——两条都实测有效。**`./start.sh` 现在自带激活判定**:启动即失败时直接报 ✗ 并非零退出,不再谎报成功 |
 
 ---
 
 ## 8. 验证工作流
 
 1. **service 层先行**:`node -e "import('./service/api.mjs')…"` 直测每个查询函数的返回形状(不等 UI)
-2. **boot 验证**:重启后 grep 日志(数据服务就绪 / 已注册 N 个工具 / JsonSchemaError);
+2. **boot 验证**:`./start.sh` 结尾自带激活判定(`scripts/activation-verdict.sh`:✓ 已激活 / ✗ 激活失败并以非零退出 / ⚠ 无法判定)——**拿到地址不等于插件活着**;之后改了 Host 半区再 grep 日志(数据服务就绪 / 已注册 N 个工具 / JsonSchemaError);
    本地 link 插件的改动用 `plugin_manager set_bundle <名> enabled=false` → `enabled=true` 关开重载,
    每次 `application` 结果明确可见(field-notes §4)
 3. **页面断言**:优先 **DOM evaluate 断言**(取 `.hero .value` 文本、表格行数、首个单元格)而非截图——大数据 SVG 页面截图像素管线可能出伪影,DOM 永远是真值
@@ -391,6 +415,9 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 1. 隔离环境起 `npx dsh@<新版>`(不动现有 profile)
 2. 放开本仓库 `engines.dsh` 范围 → 跑完整验证工作流(§8:构建 / 页面 DOM 断言 / 工具直测 / agent 闭环)
 3. diff 官方包的插槽与工具用法:`ui-plugin-manager`、`ui-schedule`、`plugin-market-bundle`(§5 列出)
+3b. **规范差异先 diff**(官方规范随行的直接用法):`node service/fetch-official.mjs /tmp/doc-old --version <旧版>` 与
+    `… /tmp/doc-new --version <新版>` 各抓一份后 `diff -r`——规则变化读官方原文,不靠转述
+    (实测:0.2.2-rc.5 → 0.2.3-alpha.1 的差异见下方台账)
 4. 变化写入下表台账 + 修订手册与 skeleton
 5. 下游工作台按台账各自升级;体系资产两条命令跟进:`npm run vendor-icons`(重提取官方图形)+
    `npm run sync-official`(刷官方规范快照),再重新生成一项目跑端到端验收
@@ -401,11 +428,19 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
   (须经 inspection 发现,属官方实验面,同段明示 Session 对实验包记录只做 best-effort 迁移)。
   结论:骨架自持 SQLite + 数据目录标准(WB_DATA_DIR → DSH_PROFILE_DIR/data → ~/.dsh/data)不与之冲突,
   继续自持;待官方把 storage service 文档化为公开面后再评估迁移(届时按裁决程序:平台事实赢)。
+- **peer 自动安装把旧版宿主包装进插件目录**(2026-11-24 实测):`npm install` 会把 peerDependencies 自动装进
+  插件自己的 `node_modules`,其中包括 npm 上的 `@deepseek-ai/dsh-tools@0.0.1-rc.1`(远低于运行时)及其依赖树
+  (生成项目因此多出十几个 `@deepseek-ai/*` 包)。**实际运行用的是宿主副本**——真机证据:插件目录里躺着
+  0.0.1-rc.1,激活失败的栈迹里加载的却是宿主的 0.2.2-rc.5,即宿主对 `@deepseek-ai/*` 的解析做了拦截。
+  结论:目录里那份是误导性的摆设,别拿它的类型或行为当依据,也别绕过裸包名去 import 深路径(未验证)。
+  待办候选:把 `@deepseek-ai/dsh-tools`、`@deepseek-ai/schemastery` 移出 peer 可让生成项目少装十几个包——
+  须先在实例里确认静态 import `@deepseek-ai/schemastery` 同样由宿主解析(本次只对 dsh-tools 有栈迹证据)。
 
 | dsh 版本 | 日期 | 变化 | 样板动作 |
 |---|---|---|---|
 | 0.2.1-rc.5 | 2026-11-03 | 初始验证基线 | 首版 skeleton + 手册;8 工具 / 5 面板 / 数据服务全链路验证通过 |
 | 0.2.2-rc.1 | 2026-11-08 | npx 缓存静默升级(非主动升级)。**破坏性变化:plugins.row.config 的 form 面改为裁剪形态 `{ state, mutate(ops, revision) }`**(rc.5 的 getSnapshot/subscribe/set 被取代,op 形状 `{op:'set',path:['字段'],value}`);且本环境实测内置插件(如子智能体)的配置表单同样不渲染。根因定位到机制层:表单绑定条件是 ui-settings 的 describe 镜像(snapshot.view.namespaces)包含该插件 ns——镜像由设置页的 describe 读喂入,插件管理页自身不触发读取;**结论:非样板缺陷,系官方子系统装配行为,待 dsh 后续版本复查**(契约按官方 config-form-types.ts 已对齐) | 隐式全量验证:9 页示例 / 双门禁(guard+tsc+冒烟) / Config+locale / SSE 流式 / 两次 AI 实战(dsh-test、dsh-test-2)均在本版通过;engines 范围 >=0.2.0 <0.3 兼容,无需修订 |
+| 0.2.3-alpha.1 | 2026-11-24 | **仅文档差异核实,运行时未验证**(用 `--version` 抓两版 dsh-doc 后 `diff`):① 新增 `references/dsh-version.md`(engines.dsh 声明细则),host-plugin.md 改为指向它;② 检查工具更名——`cordis_inspect_list` / `cordis_inspect_query` 合并为 `cordis_inspect`;③ 其余引用过的规则(host-plugin 元数据清单、practices「不得 require Harness Client 包」与主题 token、artwork、verification、tool-design、upgrading)逐字未变 | 升到本版后:手册与台账里的检查命令改用 `cordis_inspect`;engines.dsh 声明按 dsh-version.md 复核;跑完整验证工作流后再放开 engines |
 
 ---
 

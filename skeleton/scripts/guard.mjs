@@ -24,18 +24,18 @@ const ok = (msg) => console.log(`[guard] ✓ ${msg}`)
 const warn = (msg) => console.warn(`[guard] ⚠ ${msg}(不阻断,但建议修)`)
 
 // 坑 #1 + 坑 #21
-const hostFiles = ['index.js', ...walkFiles('service')]
+const hostFiles = ['index.js', ...walkFiles('service').filter(f => /\.(m?js|ts)$/.test(f))] // 只读源码:service 下可能混有数据文件
 for (const f of hostFiles) {
   if (!statSync(f).isFile()) continue
   const src = readFileSync(f, 'utf8')
   if (src.includes('required: false')) {
     fail(`${f} 含 required: false(坑 #1:可选参数整个省略 required 字段;真实错误:JsonSchemaError: parameters.store.required must be true when present)`)
   }
-  if (/parameters:\s*\{\s*type:\s*['"]/.test(src)) {
+  if (/parameters:\s*\{\s*["']?type["']?\s*:\s*['"]/.test(src)) {
     fail(`${f} 的 defineTool parameters 疑似 JSON Schema 全对象(坑 #21:parameters 是逐属性映射,无参工具用 parameters: {};全对象形态会让整个 Host entry 激活失败)`)
   }
 }
-if (failures === 0) ok('工具参数无 required: false(坑 #1)')
+if (failures === 0) ok('工具参数契约(坑 #1 无 required: false / 坑 #21 无 JSON Schema 全对象)')
 
 // 坑 #14
 // ConfigPage 等插槽视图渲染在插件管理页里,不是主面板,不要求页根
