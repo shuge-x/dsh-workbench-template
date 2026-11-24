@@ -3,6 +3,7 @@
  *  坑 #1  defineTool 可选参数 required:false → JsonSchemaError
  *  坑 #14 页面组件缺 .wb-page 根容器 → 样式作用域全失效
  *  边界    src/pages 主代码禁止 import src/examples(示例必须可整体删除)
+ *  坑 #22  Host 半区用了没 import 的标识符 → node --check 查不出,激活时才炸且整个 Host entry 失败
  */
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { execSync } from 'node:child_process'
@@ -168,6 +169,29 @@ if (existsSync(tscBin)) {
   }
 } else {
   ok('跳过 tsc 静态检查(未安装 typescript,装上后自动启用)')
+}
+
+// 坑 #22 Host 半区未定义标识符:node --check 只查语法。「用了没 import 的标识符」「import 了不存在的
+// 导出名」「相对路径写错」都要到激活时才炸,而且是整个 Host entry 一起失败(数据服务/工具/投影全没了)。
+// 用 tsc 的 checkJs 查 index.js 与 service/(tsconfig.host.json),只拦激活必炸的几类诊断;
+// 宽松 JS 的其余类型推断噪音不拦;裸包名解析不到也不拦(运行时包由宿主提供)。
+const hostTsconfig = join('tsconfig.host.json')
+if (existsSync(tscBin) && existsSync(hostTsconfig)) {
+  let out = ''
+  try {
+    execSync(`node ${JSON.stringify(tscBin)} -p ${JSON.stringify(hostTsconfig)}`, { stdio: 'pipe' })
+  } catch (e) {
+    out = String(e.stdout ?? '') + String(e.stderr ?? '')
+  }
+  if (/TS2688: Cannot find type definition file for 'node'/.test(out)) {
+    ok('跳过 Host 半区引用检查(未安装 @types/node,装上后自动启用)')
+  } else {
+    const bad = out.split('\n').filter((l) => /error TS(2304|2552|2305|2614|2724):/.test(l) || /TS2307: Cannot find module '\.{1,2}\//.test(l))
+    for (const l of bad.slice(0, 8)) fail('Host 半区引用错误(坑 #22,激活时会炸): ' + l.trim())
+    if (bad.length === 0) ok('Host 半区引用检查通过(未定义标识符 / 不存在的导出 / 相对路径)')
+  }
+} else if (!existsSync(hostTsconfig)) {
+  ok('跳过 Host 半区引用检查(缺 tsconfig.host.json)')
 }
 
 // 渲染冒烟:逐页面组件 renderToString(坑 #15 的运行时形态,渲染即崩)

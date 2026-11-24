@@ -3,20 +3,25 @@
  *
  * 机制:全部变体的覆盖 CSS 一次性注入(以 html[data-wb-variant="<id>"] 为作用域),
  * 切换 = 在 <html> 上设置 data 属性——纯 CSS 即时生效,零构建;localStorage 记住选择。
- * 边界:切换器渲染在**插件自己的页面顶栏里**(首页右上角),只控制本插件覆盖的页面;
+ * 边界:切换器渲染在**插件自己的页面顶栏里**,只控制本插件覆盖的页面;
  * 不做全局悬浮控件(不出现在插件之外的页面上)。
+ * 固件不预置页面,所以 DesignSwitcher 默认**没有被任何页面挂载**——第一个业务页面的顶栏
+ * 右侧要放 `<DesignSwitcher />`(AGENTS.md 工作流第 2 步),不放用户就看不到切换器。
  */
 import { useEffect, useState, type ReactNode } from 'react'
 import { VARIANTS } from './variants'
 
 const KEY = 'wb-design'
 
+/** 默认设计变体(没选过、或已保存的选择失效时的回退)。改默认设计只改这一处(见 design/README.md)。 */
+export const DEFAULT_VARIANT = 'wb'
+
 function readSaved(): string {
   try {
-    const v = localStorage.getItem(KEY) ?? 'wb'
-    return VARIANTS.some(x => x.id === v) ? v : 'wb'
+    const v = localStorage.getItem(KEY) ?? DEFAULT_VARIANT
+    return VARIANTS.some(x => x.id === v) ? v : DEFAULT_VARIANT
   } catch {
-    return 'wb'
+    return DEFAULT_VARIANT
   }
 }
 
@@ -28,7 +33,7 @@ export function applyVariant(id?: string): void {
   const saved = (() => {
     try { return localStorage.getItem(KEY) ?? undefined } catch { return undefined }
   })()
-  document.documentElement.dataset.wbVariant = id ?? saved ?? 'wb'
+  document.documentElement.dataset.wbVariant = id ?? saved ?? DEFAULT_VARIANT
 }
 
 /** 设计切换控件:放在页面顶栏里(右上角)。只控制本插件覆盖的页面。 */

@@ -102,6 +102,21 @@ for (const f of jsFiles) {
 }
 if (failures === 0) ok(`Host 半区语法检查通过(node --check,${jsFiles.length} 个文件)`)
 
+// 首次会话提示词有两个出口:生成器页面(src/pages/ScaffoldPage.tsx)与随项目附带的 skeleton/README.md。
+// 两处正文必须逐行一致——漂移过一次(README 还是旧版)。README 提示词自「请先完成入职」起的每一行,
+// 都要能在 ScaffoldPage 源码里逐字找到;首行含路径与包名,页面版是动态拼的,不比
+{
+  const block = readFileSync(join('skeleton', 'README.md'), 'utf8').match(/```text\n([\s\S]*?)```/)?.[1]
+  if (block === undefined) {
+    fail('skeleton/README.md 里找不到 ```text 提示词块(首次会话提示词)')
+  } else {
+    const page = readFileSync(join('src', 'pages', 'ScaffoldPage.tsx'), 'utf8').replace(/\\'/g, "'")
+    const drifted = block.split('\n').slice(1).filter((line) => line.trim() !== '' && !page.includes(line))
+    for (const l of drifted) fail(`首次会话提示词两处不一致——README 有而 ScaffoldPage 没有:${l.slice(0, 48)}…`)
+    if (drifted.length === 0) ok('首次会话提示词两处一致(README ↔ ScaffoldPage)')
+  }
+}
+
 if (failures > 0) {
   console.error(`[guard] ${failures} 项未过,发布阻断(规范见 docs/EXAMPLES.md 与 docs/dsh-plugin-playbook.md §7)`)
   process.exit(1)

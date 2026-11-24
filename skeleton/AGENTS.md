@@ -13,24 +13,33 @@
 index.js            Host 半区:webServer 前缀路由 /wb-api/*(同源数据服务)+ agent 工具(wb_*)
                     + Config(Schemastery:apply(ctx, config) 第二参消费,值经 profile cordis.yml 持久化,HMR 热重载)
                     · 配置的 UI 表单不是自动的:需注册 plugins.row.config 插槽自绘表单
-                      (契约:form.getSnapshot/set/subscribe,view='summary'|'page';
-                       参考实现:样板仓库主分支 main:src/pages/ConfigPage.tsx)
+                      (契约:form.{ state, mutate(ops, revision) },view='summary'|'page';
+                       参考实现:本项目 src/pages/ConfigPage.tsx)
 service/            数据层:api.mjs(查询函数)/ db.mjs(SQLite)/ seed.mjs(首启造数)
                     + session-stats.mjs(会话联动固件:projection + 探针工具 wb_session_stats)
 src/client.tsx      Client 半区唯一 dsh 耦合点:PANELS 注册面板 + locale 字典注册(esbuild 单文件 bundle)
 src/locales.ts      本地化命名空间(zh/en 键一致);页面经 inject face 的 t() 取词
 src/theme.ts        设计系统实现:wb- tokens + 基础组件类 + 官方图标 sprite 挂载(共享资产)
-design/             ★ 设计语言库:多套 DESIGN 变体(默认工作台中性 / 终端风 / 纸感),
-                    换肤 = 选一份覆盖根目录 DESIGN.md + 让 AI 按其 tokens 更新 theme.ts
+design/             ★ 设计语言库:各套 DESIGN 变体(工作台中性 / 终端风 / 纸感 / 商店绿)的契约文档。
+                    换默认设计 = 选一份覆盖根目录 DESIGN.md + 改 src/design/switcher.tsx 的
+                    DEFAULT_VARIANT 一处(见 design/README.md);不需要动 theme.ts
+src/design/         设计语言的机器形态:variants.ts(各变体的 token 覆盖包)/ switcher.tsx(运行时
+                    切换器 DesignSwitcher)/ icons-data.ts(官方图形 vendored 数据,勿手改)
+src/icons.tsx       图标:WbIcon(按 glyph 名引用官方图形);自绘图标也放这里
+locale/ icon.svg    展示元数据:Plugins 页读的 meta.title / description 与图标(官方 host-plugin.md 要求)
 src/api.ts          前端请求层:同源 fetch 封装(get/post/stream)
-src/pages/          ★ 你的业务页面(主代码,长期演进;首页起步页刻意空白,业务从零填充)
+src/pages/          ★ 你的业务页面(主代码,长期演进)。固件不预置任何页面——做哪几个面板、要不要
+                    首页,开工时按用户需求设计,照 examples 范式实现后在 client.tsx 的 PANELS 注册
 src/examples/       示例区:9 个范式页 + 会话联动 tab(教学代码)。源码常驻供 AI 阅读,但默认不注册进侧栏
                     ——要看渲染效果把 src/client.tsx 的 SHOW_EXAMPLES 置 true;可整体删除
 docs/EXAMPLES.md    范式索引 + 红线映射表(AI 开发先读它)
 docs/official/      官方规范随行:dsh-doc 技能全文(SKILL.md 入口 + references/ 各篇 + templates/)。
                     生成时按本机 dsh 版本对齐抓取;抓不到时落骨架快照——以 VERSION.txt 标注的
                     来源与日期为准,它可能过期,机制疑问以运行中的 dsh 实际行为为最终事实
-scripts/guard.mjs   门禁:红线机器检查,发布前必过
+scripts/guard.mjs   门禁:红线机器检查(红线/边界/元数据/包禁令/token 纪律/tsc/Host 半区引用/冒烟),发布前必过
+start.sh            一键起实例:依赖安装 → 构建 → 初始化 profile → 登记 → 启动 → 激活判定(结尾的 ✓/✗ 才是启动结论)
+docs/dsh-plugin-playbook.md  实战手册:踩坑清单(§7)/ 机制验证清单(§11)/ 规则裁决 / 升级 SOP
+                    ——guard 报错先查 §7;用某个 dsh 机制之前先查 §11
 ```
 
 ## 必读顺序
@@ -67,7 +76,9 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 ## 红线(违反 = guard 阻断或运行时崩)
 
 1. 每个页面组件根节点必须是 `<div className="wb-page">`——样式作用域根,缺失则外壳样式漏入(坑 #14)
-2. `defineTool` 可选参数**整个省略 `required` 字段**,禁止写 `required: false`(坑 #1,注册被拒)
+2. `defineTool` 的参数契约——写错是**整插件级失败**(同批工具与投影一起消失):`parameters` 是**逐属性映射**
+   (`{ 参数名: { type, description? } }`),不是 JSON Schema 对象,无参工具写 `parameters: {}`(坑 #21);
+   可选参数**整个省略 `required` 字段**,禁止写 `required: false`(坑 #1)。可抄的范例见 playbook §6.2
 3. **主代码(src/pages)禁止 import src/examples**——示例必须可整体删除(guard 边界检查)
 4. `src/theme.ts` 是共享资产:只用不删;要加词汇在尾部追加,不改动既有类
 5. 图标用官方图形库的 vendored 快照(src/design/icons-data.ts,MIT,theme.ts 已挂 sprite)——**禁止 import `@deepseek-ai/dsh-client-*` 任何 Harness Client 包**(官方 practices.md 明令插件不得 require/load:无预警变更,组件一抛错槽位即白屏)。用法:`WbIcon`(src/icons.tsx)按 glyph 名引用;先到「示例·工作台 → 图标规范」按中文名或键名搜合适图形(106 图形 × 2 权重,键名见 icons-data.ts),确实没有才自绘,放进 src/icons.tsx 并注明用途。官方出新版后由模板仓库 `npm run vendor-icons` 重提取,项目内不手改数据文件。
@@ -84,7 +95,9 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 ## 开发工作流(加一个页面的标准路径)
 
 1. 读 `docs/EXAMPLES.md` 红线映射表,按意图挑示例页(总览/列表/详情/图表/表单/四态/图标)
-2. 新建 `src/pages/XxxPage.tsx`,范式照对应示例页抄,内容换成业务
+2. 新建 `src/pages/XxxPage.tsx`,范式照对应示例页抄,内容换成业务。**第一个业务页面的顶栏右侧放
+   `<DesignSwitcher />`**(from `./design/switcher`)——用户靠它即时切换设计语言;固件不预置页面,
+   你不挂载,用户就看不到切换器
 3. 在 `src/client.tsx` 的 `PANELS` 数组注册(id + 标题 + 图标 + page)
 4. 要真数据:`service/api.mjs` 加查询函数 → `index.js` 的 `routes` 加路由 → `src/api.ts` 加 fetch → 页面调用
 5. 每个取数页面**四态备齐**:加载(骨架屏)/ 空态(给下一步动作)/ 错误(带重试)/ 无权限(明确提示)
@@ -95,7 +108,7 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
      (数据服务/工具/投影可能全部不可用),按它打印的 diagnostic 修完重跑;之后再看日志确认无 slot entry 崩溃
    - **明暗双主题各过一轮**:默认(wb)与暗色变体(terminal)下分别做页面 DOM 断言
      ——wb- tokens 偏离登记册已声明明暗由 DESIGN.md 自担,实测就是兑现方式
-     (切换器在页面顶栏,属用户操作;AI 验证可在代码里临时 applyVariant('terminal') 后还原)
+     (切换是用户的操作,AI 不代切;AI 验证可在代码里临时 applyVariant('terminal') 后还原)
    - UX 自查一轮:按 DESIGN.md 的 Do/Don't 过空态/焦点/对比度/禁用态(官方要求 expert review 的落地形态);最终视觉验收归用户
 
 ## 默认策略(直接按默认执行,不要作为澄清问题提出)
@@ -105,12 +118,15 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 1. **示例面板是给人看的,AI 不主动开启**:AI 的验证靠源码 + DOM 断言(精确值),
    最终视觉验收由用户完成。仅当用户明确要求对照渲染,或诊断视觉偏差确有必要时,
    说明理由后临时把 `src/client.tsx` 的 SHOW_EXAMPLES 置 true;阶段结束回滚为 false。
-   设计切换器:内置在首页顶栏右上角——**那是用户的操作,AI 不代切**(用户要求时可以)。
+   设计切换器 `<DesignSwitcher />` 需要你挂到第一个业务页面的顶栏右侧(工作流第 2 步);
+   **切换本身是用户的操作,AI 不代切**(用户要求时可以)。
 2. **真机预览**:可直接运行项目根目录的 `./start.sh` 起实例做渲染验证
    (默认 profile 与端口;端口被占会自动后移,无需干预)。
 3. **文案语言**:默认 zh-only 快速迭代;`src/locales.ts` 双语机制保留,
    需要时再补 en 键位(键需一致)。
-4. **数据与 AI 能力**:骨架自带的 SQLite/service 与 /ai-stream 保留但默认闲置;
+4. **数据与 AI 能力**:会话联动固件(service/session-stats.mjs:会话统计投影 + 探针工具 wb_session_stats)
+   默认启用;不需要就删——连同 index.js 里的调用与 `inject` 中的 `'sessionProjections'`。
+   骨架自带的 SQLite/service 与 /ai-stream 保留但默认闲置;
    业务确实需要时再启用或业务化,不要提前改造。
    数据落 `<profile根>/data/<包名>/`(升级/重装不丢);表结构演进用
    PRAGMA user_version 记版本并写迁移步骤,不要裸改 CREATE TABLE。
@@ -120,23 +136,31 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 ## 命令
 
 ```bash
-npm run guard        # 红线门禁(可选项缺失/边界/根容器)
+npm run guard        # 门禁:红线/边界/元数据/Harness Client 包禁令/token 纪律/tsc/Host 半区引用/渲染冒烟
 npm run build        # esbuild 打包 client.js
 npm run watch        # 监听构建
+npm run smoke        # 渲染冒烟(逐页面组件 renderToString;guard 已包含)
 npm run prepack      # guard + build(发包前自动跑)
 ```
 
 ## 验证与运行
 
 - **client.js(src/)改动**:dsh 实例不重启,浏览器刷新即生效(rev 机制)
-- **Host(index.js/service/)改动**:需重启 dsh 实例
-- **预览(推荐)**:项目根目录 `./start.sh`——自动完成 构建/初始化 profile(首次)/插件登记/启动(启动后终端被占用属正常)
-  或手动三步:① `npx @deepseek-ai/dsh --profile <名字> --from-default-profile web --port 3124`(首次补 web 壳,会前台起服务;3080 被占时必须带 --port)
-  ② 启动实例 ③ **另一终端** `npx @deepseek-ai/dsh plugin --profile <名字> add <本项目>`(热登记,无需停服务)→ 刷新浏览器
-- **client.js(src/)改动**:dsh 实例不重启,浏览器刷新即生效(rev 机制)
-- **Host(index.js/service/)改动**:需重启 dsh 实例
+- **Host(index.js/service/)改动**:新代码不会自动生效。让它生效的办法,按稳妥程度排——
+  ① 重跑 `./start.sh`(同 profile 会自动重启旧实例,并重新给出激活判定);
+  ② 实例在跑时,经插件管理器对本插件 disable → enable(0.2.2-rc.5 真机实测:不重启进程即可加载新代码)。
+  注意版本差异:0.2.2-rc.5 的 host-plugin.md 写「替换已安装包的文件需重启才能加载新模块」,0.2.3-alpha.1 改为
+  「文件变更会在下一次 profile 重组时被拾取、无需重启」——以你运行版本的 docs/official/ 与激活判定为准
+- **预览(推荐)**:项目根目录 `./start.sh`——自动完成 依赖安装(首次)/ 构建 / 初始化 profile(首次)/ 插件登记 / 启动。
+  实例在**后台**运行(日志:`/tmp/dsh-<profile>.log`),脚本打印激活判定后即返回;端口被占时自动后移。
+  停止实例:`kill $(lsof -nP -iTCP:<端口> -sTCP:LISTEN -t)`
+- 手动路径(只在排查问题时用):先在本项目 `npm install`(坑 #17:link 安装时依赖必须在插件自己的目录里)
+  → `npx @deepseek-ai/dsh --profile <名字> --from-default-profile web --port <端口>`(首次补 web 壳,会前台起服务)
+  → 另一终端 `npx @deepseek-ai/dsh plugin --profile <名字> add <本项目>` → 启动后查日志里有没有 `did not activate`
 
 ## 参考文档与项目
 
-`docs/dsh-plugin-playbook.md` —— 15 个真实踩坑 + 机制验证清单 + dsh 升级 SOP(**生成时已随项目附带**,guard 报错时先查 §7)。
-完整真实工作台(全部范式组装后的样子)见样板项目 **dsh-workbench-sample**(单店经营面板)。
+`docs/dsh-plugin-playbook.md` —— 实战手册:踩坑清单(§7)+ 机制验证清单(§11)+ 规则裁决 + dsh 升级 SOP
+(随项目附带;guard 报错先查 §7,用某个 dsh 机制之前先查 §11)。
+样板项目 **dsh-workbench-sample**(v0.4.0,单店经营面板)已冻结:其代码含**已被官方禁用的旧机制**
+(import Harness Client 图标包)——只作历史教学参照,不得作为现行范式抄;现行机制以 docs/official/ 与本文件为准。

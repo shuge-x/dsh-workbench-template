@@ -10,7 +10,8 @@
 # 判定信号(取自骨架 index.js 的启动日志;改了那几行文案会落到 ⚠):
 #   ✓  [wb-data] 已注册 N 个 agent 工具      apply() 走到了最后一行
 #   ✗  dsh: warning: N entry did not activate dsh 自己报的激活失败(下一行起是 diagnostic)
-# 以**最后一次**激活尝试为准:HMR / file-change reload 会在同一进程里再激活一次。
+# 以**最后一次**激活尝试为准:disable → enable 之类的重新激活会在同一进程、同一份日志里再走一遍
+# (2026-11-23 真机日志即如此:先失败,重激后成功)。
 LOG="$1"
 WAIT="${2:-10}"
 

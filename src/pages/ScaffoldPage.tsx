@@ -97,15 +97,16 @@ export function ScaffoldPage(): ReactNode {
   const firstPrompt = ok && result !== null ? [
     `这是一个刚生成的 dsh 工作台插件项目(路径 ${result.target},包名 ${result.name},插件 id ${result.id})。`,
     '请先完成「入职」,暂时不要写任何代码:',
-    '1. 读 docs/official/dsh-doc/SKILL.md —— 官方规范随行入口(优先级最高;references/ 按任务查,机制疑问题以运行中 dsh 实际行为为准)',
+    '1. 读 docs/official/dsh-doc/SKILL.md —— 官方规范随行入口(优先级最高;references/ 按任务查,机制有疑问时以运行中 dsh 的实际行为为准)',
     '2. 读完 AGENTS.md —— 项目身份、红线、规则层级与裁决程序、默认策略、开发工作流',
-    '3. 读完 DESIGN.md —— 视觉契约(设计语言、Do/Don\'t);首页右上角 ◐ 可即时切换设计语言,换语言见 design/ 目录',
+    '3. 读完 DESIGN.md —— 视觉契约(设计语言、Do/Don\'t);设计语言可在运行时切换——切换器组件在 src/design/switcher.tsx,需要你挂到第一个业务页面的顶栏(AGENTS.md 工作流第 2 步)',
     '4. 读完 docs/EXAMPLES.md 与 src/examples/ 的 9 个示例页源码(渲染效果:把 src/client.tsx 的 SHOW_EXAMPLES 置 true)',
     '5. 用几句话向我复述:这个目录是什么、有哪些既定约束、你准备按什么工作流开发;然后向我提出你需要澄清的问题',
     '',
     '我会在下一条消息里给出需求描述。开发约束(全程适用):',
     '页面范式照 examples 抄,不改 examples/ 与 theme.ts;主代码不 import 示例区;',
     '图标用 WbIcon 按 glyph 名引用(先到「示例·工作台 → 图标规范」搜),禁止 import @deepseek-ai/dsh-client-* 任何包;',
+    '第一个业务页面的顶栏右侧放 <DesignSwitcher />,让用户能即时切换设计语言;',
     '每个新页面注册进 src/client.tsx 的 PANELS 并带 .wb-page 根容器;',
     '每次改完跑 npm run guard && npm run build,全绿才算完成;交付前按 AGENTS.md 验证清单走明暗双主题与 UX 自查。',
   ].join('\n') : ''
@@ -179,7 +180,7 @@ export function ScaffoldPage(): ReactNode {
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed var(--tll-line)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                 <span style={{ fontSize: 13.5, fontWeight: 650 }}>可选:自己在 dsh 里预览运行</span>
-                <span style={{ fontSize: 12, color: 'var(--tll-ink2)' }}>一条命令,自动完成 构建/初始化/登记/启动;启动后终端被占用属正常,也可让 AI 代跑</span>
+                <span style={{ fontSize: 12, color: 'var(--tll-ink2)' }}>一条命令,自动完成 构建/初始化/登记/启动,并给出激活判定;实例在后台运行。想让 AI 代跑也可以</span>
                 <button
                   className="tll-pill-btn" style={{ marginLeft: 'auto' }}
                   onClick={() => { void navigator.clipboard?.writeText(`cd ${result.target ?? ''} && ./start.sh`).catch(() => {}) }}

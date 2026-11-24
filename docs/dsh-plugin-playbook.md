@@ -1,11 +1,12 @@
 # dsh 插件开发实战手册(Playbook)
 
-> 来源:dsh 工作台样板(dsh-plugin-workbench-sample)从零到端到端闭环的完整开发经验。
-> 基于 **dsh 0.2.1-rc.5**(npm 安装版)实测。目标读者:要在 dsh 上开发新工作台/垂直产品的团队。
+> 来源:dsh 工作台模板仓库(skeleton/ + 生成器)及其前身样板(dsh-workbench-sample)从零到端到端闭环的开发经验,
+> 并持续吸收真实项目与外部评审的踩坑(§7)。
+> 基于 **dsh 0.2.x**(npm 安装版)实测;各版本的差异与升级记录见 §12 台账。目标读者:要在 dsh 上开发新工作台/垂直产品的团队。
 > 结论先行:**用插件机制,不要 fork dsh,也不要急着自建前端**。页面组件保持零 dsh 依赖,迁移后路永远留着。
 >
-> **本手册的定位**:样板仓库(skeleton/ + 本手册)是长期资产;主项目(甜啦啦)是 dsh 能力的验证场与参考实现。
-> dsh 升级时,先在样板仓库验证并更新本手册,下游工作台按 §12 记录升级——验证成本只在样板处发生一次。
+> **本手册的定位**:模板仓库(skeleton/ + 本手册)是长期资产;用模板生成出的各个工作台,是 dsh 能力的验证场。
+> dsh 升级时,先在模板仓库验证并更新本手册,下游工作台按 §12 记录升级——验证成本只在模板处发生一次。
 
 ---
 
@@ -37,37 +38,50 @@
 官方把 Host 包 / Client 包 / Bundle 包拆成三个;实测**单包三角色**更快,天然隔离:
 
 ```
-my-workbench/
+<你的工作台>/
 ├── package.json          # ① dsh.bundle(可安装) ② dsh.client(浏览器半区声明) ③ main=Node 半区入口
 ├── cordis.patch.yml      # bundle 补丁:把本包插入 Loader
-├── index.js              # Host 半区:数据服务 + agent 工具注册
-├── client.js             # 构建产物:浏览器闭包工厂 bundle(勿手改)
-├── build.mjs             # esbuild 构建脚本(见 §4)
+├── index.js              # Host 半区:数据服务 + agent 工具 + 配置 + 会话统计投影
 ├── service/              # 数据层(纯 Node 零依赖,可独立搬走)
-│   ├── db.mjs / seed.mjs / api.mjs
+│   ├── db.mjs / seed.mjs / api.mjs / ai.mjs / session-stats.mjs
+├── locale/  icon.svg     # 展示元数据:Plugins 页的标题 / 描述 / 图标(官方 host-plugin.md 要求)
+├── client.js             # 构建产物:浏览器闭包工厂 bundle(勿手改、不入库)
+├── build.mjs             # esbuild 构建脚本(见 §4)
+├── AGENTS.md             # AI 开发手册(身份 / 红线 / 规则层级 / 工作流)
+├── design/               # 设计语言库(各 DESIGN-*.md 契约);根目录 DESIGN.md 为当前选中的那套
+├── docs/                 # official/(官方规范随行)EXAMPLES.md(范式索引)本手册
+├── scripts/              # guard.mjs 门禁 / activation-verdict.sh 激活判定 / smoke-render.mjs 渲染冒烟
 └── src/
-    ├── client.tsx        # ★ 唯一的 dsh 耦合点:插槽注册(~50 行)
-    ├── api.ts            # 页面 → 数据服务的 fetch 封装(带静态兜底)
-    ├── styles.ts         # 全量样式,单文件注入,tll- 前缀
-    └── pages/…           # 页面组件:零 dsh 依赖,只 import react/自有模块
+    ├── client.tsx        # ★ 唯一的 dsh 耦合点:面板注册 + locale 注册 + 示例区开关
+    ├── pages/…           # ★ 业务页面:零 dsh 依赖,只 import react/自有模块
+    ├── examples/         # 示例区(范式页 + 会话联动 tab;可整体删除)
+    ├── theme.ts          # 设计系统基线:wb- tokens + 组件类 + 图标 sprite(共享资产)
+    ├── design/           # 设计语言的机器形态:variants.ts / switcher.tsx / icons-data.ts
+    ├── icons.tsx         # WbIcon(官方图形,vendored)
+    └── api.ts            # 页面 → 数据服务的 fetch 封装
 ```
 
 `package.json` 关键字段(全部实测必要):
 
 ```jsonc
 {
-  "name": "dsh-myworkbench",
+  "name": "dsh-<id>",
   "type": "module",
   "main": "index.js",
-  "files": ["index.js", "client.js", "cordis.patch.yml", "service"],  // ★ service 必须在,否则发包后 Host 半区挂
-  "scripts": { "build": "node build.mjs", "watch": "node build.mjs --watch", "prepack": "node build.mjs" },
+  // ★ 运行时文件与展示元数据都要在:漏 service 发包后 Host 半区挂(坑 #5);漏 locale/icon 则 Plugins 页无标题无图标(坑 #19)
+  "files": ["index.js", "client.js", "cordis.patch.yml", "service", "locale/*.json", "icon.svg"],
+  "scripts": { "build": "node build.mjs", "watch": "node build.mjs --watch", "guard": "node scripts/guard.mjs", "prepack": "npm run guard && node build.mjs" },
   "dsh": {
     "bundle": { "patch": "./cordis.patch.yml" },   // 角色①:可安装 bundle
     "client": { "platform": "web" }                // 角色②:client 半区声明
   },
-  "exports": { ".": "./index.js", "./client": "./client.js", "./package.json": "./package.json" },
+  "exports": {
+    ".": "./index.js", "./client": "./client.js", "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json", "./icon": "./icon.svg"   // ★ 官方要求导出,Plugins 页据此读元数据
+  },
   "engines": { "dsh": ">=0.2.0 <0.3" },             // ★ 锁版本;不满足时安装/启动明确拒绝
-  "peerDependencies": { "react": "^18.2.0", "@deepseek-ai/dsh-tools": "*" }
+  // 运行时包由宿主提供,声明成 peer;不写 dependencies(坑 #17:link 安装时依赖要能在插件自己的目录里解析)
+  "peerDependencies": { "react": "^18.2.0", "react-dom": "^18.2.0", "@deepseek-ai/dsh-tools": "*", "@deepseek-ai/schemastery": "*" }
 }
 ```
 
@@ -202,12 +216,12 @@ export function apply(ctx) {
 为什么优于独立端口 sidecar(两种都跑通过后的结论):
 - **同源**:浏览器 fetch 不需要 CORS 白名单,web 壳换端口零影响
 - **复用壳鉴权**:`connection.requestRejection` 一行挡住未授权请求(sidecar 方案默认无鉴权,是真实隐患)
-- **无端口分配问题**:多工作台并存只靠各自路由前缀(/wb-api、/wbs-api…)区分
+- **无端口分配问题**:多工作台并存只靠各自路由前缀(/wb-api、/<前缀>-api…)区分
 - 仍要注意:prefix 路由的 handler 是裸 Node req/res,POST body 要自己读;SQLite 用 `node:sqlite`(Node 24 内置);
   造数失败删库重试;确定性 PRNG;`service/` 保持零依赖可独立测试
 
-> 多工作台并存约定:每个插件的数据服务用独立端口(如 3777、3801…),CORS 白名单含各自的 web 壳端口;
-> 同一台机器同时跑多个 dsh profile 时,web 端口也要错开。
+> 多工作台并存约定:数据服务只靠各自路由前缀区分(/wb-api、/<前缀>-api…),不占端口、无 CORS;
+> 同一台机器同时跑多个 dsh profile 时,错开的是各**实例的 web 端口**(`./start.sh` 会自动后移)。
 
 ### 6.2 agent 工具(defineTool)
 
@@ -271,17 +285,18 @@ export function apply(ctx) {
 | 8 | 首启造数失败留下半成品库,之后永远跳过造数 | 造数 try/catch → 回滚 + 删库文件 + 抛错重试 |
 | 9 | `dsh-tools` 顶层 import 让独立运行(node index.js)直接崩 | 动态 import + try/catch,失败则跳过工具注册 |
 | 10 | 版本漂移风险 | `engines.dsh` 锁范围 + 升级时 diff 官方包的插槽用法 |
-| 11 | web 壳换端口后,页面 fetch 数据服务全部空态(CORS 拦截) | Host 数据服务的 CORS 白名单必须覆盖**每个** web 壳端口;多工作台并存时各自登记,或用环境变量注入 |
+| 11 | 〔历史〕web 壳换端口后,页面 fetch 数据服务全部空态(CORS 拦截)——只发生在已被淘汰的 sidecar 独立端口方案下 | 现行机制(webServer 前缀路由,§6.1)同源、无 CORS,不会遇到;若你确实另起了独立端口的服务,其 CORS 白名单必须覆盖**每个** web 壳端口 |
 | 12 | 想让插件"替用户向会话发提示词"——没有公开 API(提交权归用户,Input 触发器包只管 / 菜单) | 标准做法:生成带上下文的提示词 → `clipboard.writeText` → `ctx.layout.selectPanel('conversation')` 跳转,用户粘贴发送;按钮文案如实说"已复制" |
 | 13 | 并发 AI 会话共享同一工作目录时,曾出现单文件静默损坏(冒号被批量替换),提交后才在构建中暴露 | 多会话/多代理**不要共享同一工作目录**;git 提交前跑一次构建作门禁(esbuild 语法检查能抓住这类损坏) |
-| 14 | 页面组件**丢失 `.tll-page` 根容器** → reset(`.tll-page :where(button)`)与页面级样式全部落空,dsh 外壳的按钮默认描边/内边距漏入,tab 变"裸盒子"。曾因重写页面组件(接真数据)时丢掉包装层,带病运行多个版本 | 每个主面板组件根节点**必须是 `<div className="tll-page">`**(样式作用域根);重写页面时先保住根容器;断言:`document.querySelectorAll('.tll-page').length === 1` |
+| 14 | 页面组件**丢失根容器**(样式作用域根;骨架是 `.wb-page`,此坑发生在旧样板的 `.tll-page` 代)→ reset(`.<前缀>-page :where(button)`)与页面级样式全部落空,dsh 外壳的按钮默认描边/内边距漏入,tab 变"裸盒子"。曾因重写页面组件(接真数据)时丢掉包装层,带病运行多个版本 | 每个主面板组件根节点**必须是 `<div className="wb-page">`**(样式作用域根;前缀随项目改名);重写页面时先保住根容器;断言:`document.querySelectorAll('.wb-page').length === 1` |
 | 15 | **用了没 import 的标识符**(`Pill is not defined`)——esbuild 不做引用检查,构建全绿但页面渲染即崩,整面板被卸载 | 新页面写完立刻逐页签 DOM 断言(浏览器实测);或引入 `tsc --noEmit` 做静态引用检查;这是 #17 类错误的又一变体 |
 | 16 | **多插件共存互拆 sprite**:图标 sprite 的幂等守卫若用全局属性名(不带包名),两个工作台插件共存时后挂者跳过挂载、先卸载者的清理把共享 sprite 一起拆掉——后者图标全灭且无报错 | 文档级挂载物(sprite 等)一律**按包名命名空间化**:`data-<前缀>-icon-sprite-<包名>`,守卫只认自己的属性、卸载只拆自己挂的;theme.ts 的 PKG 常量由 scaffold 自动改名 |
 | 17 | **本地 link 安装的依赖解析绕过 profile** → `Cannot find package 'x' imported from /path/to/plugin/index.js`(pnpm 步骤成功,但插件激活失败 `1 entry did not activate`) | `install_bundle` 对本地目录做 `link:` 安装,Node 按 ESM 的 **realpath** 向上找 `node_modules`,profile 的不在路上(同机实测:零依赖 link 插件 ✅ / registry 安装带依赖 ✅ / link 安装带依赖 ❌)。**先在插件目录 `npm install`**(start.sh 已自动做);registry 安装无此问题(pnpm 平铺进 profile)。`@deepseek-ai/dsh-tools` 在 npm 上(0.0.1-rc.1)远低于运行时,勿装成真实依赖——动态 import + try/catch(坑 #9)是正解 |
 | 18 | `defineTool` 可选参数写 `required: false` → 真实错误文案是 `JsonSchemaError: parameters.store.required must be true when present` | 可选参数**整个省略** `required` 字段;guard 已检查并带上这句原文,新增工具后 grep 一次 |
 | 19 | 生成的插件在 Plugins 页**没有标题/描述/图标**(缺 `locale/*.json` 的 `meta.title`/`meta.description` 与 `icon.svg`) | `files` 必须含 `locale/*.json` 与 `icon.svg`;`exports` 必须导出 `./locale/*.json` 与 `./icon`(官方 host-plugin.md 清单);缺失时官方回落到 package.json 的 name/description 与默认占位图。图标按 artwork.md 画:36×36 viewBox、字标用路径不用 `<text>`、不画底板 |
 | 20 | 函数插件漏 `export const inject = [...]` → `cannot get property "sessionProjections" without inject`;**import 成功、插件启动后才炸**(运行到那一行才抛) | 消费哪个 face 就在 `inject` 里声明哪个(`['slots','locale','sessionProjections','tools']`);错误文案本身会教你缺什么。类插件用 `static inject = [...]`(实战出处:dsh-plugin-field-notes.md 错误 2) |
-| 21 | `defineTool` 的 `parameters` 传 JSON Schema 全对象(`{type:'object',…}`)→ `JsonSchemaError: parameters.type must be a value schema object`,**整个 Host entry 激活失败、已注册的面(投影等)一并回滚**——症状是"客户端活着、Host 全死、怎么聊都没数据" | npm 版 defineTool 的 `parameters` 是**逐属性映射 spec**(`{参数名:{type,description}}`,parameterSchemaSpecToJsonSchema 编译);无参工具写 `parameters: {}`;确需完整 JSON Schema 就绕过 defineTool 直接 `ctx.tools.register`(实战 session-inspector 形态)。guard 有毒形态检查。**定位与恢复**(2026-11-23 真机实测):插件管理器看 `fiberPhase: failed` + `diagnostic` 原文定位;爆炸半径=整插件(同文件其余工具一起消失);改对代码后经 plugin_manager disable→enable 重激(fiberPhase failed → active);link 目录文件变更触发官方 file-change reload 是另一条恢复路——两条都实测有效。**`./start.sh` 现在自带激活判定**:启动即失败时直接报 ✗ 并非零退出,不再谎报成功 |
+| 21 | `defineTool` 的 `parameters` 传 JSON Schema 全对象(`{type:'object',…}`)→ `JsonSchemaError: parameters.type must be a value schema object`,**整个 Host entry 激活失败、已注册的面(投影等)一并回滚**——症状是"客户端活着、Host 全死、怎么聊都没数据" | npm 版 defineTool 的 `parameters` 是**逐属性映射 spec**(`{参数名:{type,description}}`,parameterSchemaSpecToJsonSchema 编译);无参工具写 `parameters: {}`;确需完整 JSON Schema 就绕过 defineTool 直接 `ctx.tools.register`(实战 session-inspector 形态)。guard 有毒形态检查。**定位与恢复**(2026-11-23 真机实测):插件管理器看 `fiberPhase: failed` + `diagnostic` 原文定位;爆炸半径=整插件(同文件其余工具一起消失);改对代码后经插件管理器 disable→enable 重激(fiberPhase failed → active,新代码生效、无需重启进程——0.2.2-rc.5 真机验证)。**别把新版口径当成旧版文档的话**:rc.5 的 host-plugin.md 写「替换已安装包需重启才能加载新模块」,0.2.3-alpha.1 才改为「文件变更在下一次 profile 重组时被拾取」(见 §12 台账)。**`./start.sh` 现在自带激活判定**:启动即失败时直接报 ✗ 并非零退出,不再谎报成功 |
+| 22 | **Host 半区用了没 import 的标识符**(`ReferenceError: readFileSync is not defined`,出自 `service/db.mjs:10`)——`node --check` 只查语法所以过了门禁;到激活时才炸,且整个 Host entry 一起失败(数据服务/工具/投影全没)。坑 #15 的 Host 侧变体 | guard 用 tsc 的 checkJs 查 `index.js` 与 `service/`(`tsconfig.host.json`),只拦「找不到名字 / 导入的成员不存在 / 相对路径写错」这几类激活必炸的诊断;裸包名解析不到不拦(运行时包由宿主提供)。实测能逮四种:未导入的标识符、`node:fs` 里不存在的导出、相对路径拼错、本地模块里拼错的成员名(2026-11-25,由一次真实实验的激活失败日志发现)|
 
 ---
 
@@ -317,7 +332,7 @@ export function apply(ctx) {
 |---|---|---|
 | ① 平台事实 | 官方 dsh-doc(与运行版本对齐)+ 运行中 dsh 的实际行为 | 机制与禁令的最终来源,不可协商 |
 | ② 项目规范 | AGENTS.md 红线/默认策略 + EXAMPLES.md + 本 playbook | 与①对齐处是引用;独有发现自主维护;**有意偏离必须声明式入册** |
-| ③ 执行门禁 | guard 五件套 + tsc + smoke | ①② 中可静态检查的子集,防回归 |
+| ③ 执行门禁 | guard 门禁 + tsc + smoke | ①② 中可静态检查的子集,防回归 |
 
 **裁决四步**(①与②冲突时):核实(读版本对齐的官方规范,注意快照 VERSION.txt 可能过期)→
 分类(平台强制 → 对齐官方改实践;风格选择 → 声明式偏离入册;判据 = 违反是否破坏机制或伤害他人)→
@@ -336,7 +351,8 @@ practices.md「插件不得 require/load Harness Client 包」才反转成 vendo
 → 整改(8 条采纳,2 条以官方规范原文反证推翻:icon 照抄违反 artwork.md 三条、sync-shared 是
 休眠死机制)→ 评审方独立复核认账两处、反抓整改两处遗留(§11 残留行、projection 检查漏扫 Host 半区)
 → 全部闭合(9581418)。经验:①评审与整改互核时,裁决程序第 1 步「回代码/官方原文核实」双方都要做,
-引用转述不算证据;②整改方修措辞时要 grep 机制名而非只 grep 措辞。
+引用转述不算证据;②整改方修措辞时要 grep 机制名而非只 grep 措辞;③对比两版文档要**逐词 diff 且不截断输出**——
+曾因按字符截断 diff 而漏掉一条实质规则变化(Host 文件改动的生效方式),把「未变」写进了台账,次日才纠正。
 
 ---
 
@@ -351,8 +367,8 @@ AGENTS.md(AI 手册)+ docs/EXAMPLES.md(范式索引与红线)+ guard 门禁(红�
 ```sh
 # ① CLI(推荐)
 node scaffold.mjs /path/to/new-wb --name dsh-<id> --id <id>
-# ② 页面化:样板侧边栏「新建工作台」输入路径,结果页有可直接复制的命令块与首次提示词
-# ③ 聊天:让 agent 调 wbs_scaffold 工具
+# ② 页面化:生成器插件(dsh-workbench-template)的「新建工作台」页输入路径,结果页有可复制的启动命令与首次提示词
+# ③ 聊天:让 agent 调 wbt_scaffold 工具
 ```
 
 生成后(结果页命令块可直接整段复制,profile 名 = 插件 id):
@@ -367,7 +383,8 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 
 **AI 开发动线**:首次提示词(结果页可复制)→ AI 读 AGENTS.md / EXAMPLES.md → 按 9 页范式实现业务 →
 每次改动 npm run guard && npm run build 全绿 → 交付说明。
-实战记录:两次(dsh-test、dsh-test-2)从生成到页面交付 13~23 分钟,红线全守。
+实战记录:固件化**之前**的旧代际两次(dsh-test、dsh-test-2)从生成到页面交付 13~23 分钟,红线全守;
+新代际(零面板固件 + vendored 图标 + 会话联动固件)的完整开发实战尚待进行——这是当前最大的未验证项。
 
 ## 11. 机制验证清单(dsh 能力 × 实证状态)
 
@@ -383,7 +400,7 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 | 面板跳转 `layout.selectPanel` | ✅ | 经营分析落地页 | `'conversation'` 保留键可跳聊天 |
 | 会话注入提示词 | ⛔ | — | 无公开 API(提交权归用户);用"复制提示词+跳转会话"替代(#12) |
 | agent 工具 `defineTool` | ✅ | `index.js` | 可选参数省略 required;描述写数据范围与披露要求 |
-| **webServer 前缀路由**(同源 HTTP,推荐) | ✅ | `index.js` | `ctx.webServer.register({kind:'prefix', path:'/wbs-api', handler})` + `connection.requestRejection` 鉴权;零 CORS、零端口分配;**借鉴社区插件 dsh-media-desk** |
+| **webServer 前缀路由**(同源 HTTP,推荐) | ✅ | `index.js` | `ctx.webServer.register({kind:'prefix', path:'/wb-api', handler})` + `connection.requestRejection` 鉴权;零 CORS、零端口分配;**借鉴社区插件 dsh-media-desk** |
 | ~~HTTP sidecar 独立端口~~ | ⛔ 已被上项替代 | — | 曾用 127.0.0.1:3777;缺点:CORS 白名单、端口分配、无鉴权。仅当目标 dsh 无 webServer 服务时考虑 |
 | SQLite(node:sqlite) | ✅ | `service/` | 造数失败删库重试;确定性 PRNG |
 | 插件管理 UI 识别 | ✅ | 插件页 | bundle 描述展示、启用开关 |
@@ -393,14 +410,14 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 | **SSE 流式到页面**(逐字输出) | ✅ | `index.js` `/ai-read-stream` + `src/api.ts` `fetchAiReadStream` | 路由自写响应(dispatch 返回 undefined 不包 JSON)→ `text/event-stream` 逐段转发 streamChat 增量;页面 ReadableStream 解析 `data:` 帧 |
 | **官方图标系统**(vendored + sprite) | ✅ | `skeleton/src/design/icons-data.ts` + theme.ts mountIconSprite + `WbIcon` | 官方图形**vendored 进包**(`npm run vendor-icons` 提取,106 glyph × 2 权重);symbol id = `<前缀>-icon-<glyph>-<weight>`(随项目前缀改名),sprite 挂载按包名命名空间化(坑 #16)防共存互拆;插件不得 import Harness Client 包(practices.md) |
 | **skeleton 唯一源**(镜像机制已退役) | ✅ | — | 根仓 src/ 是生成器自己的 ScaffoldPage 应用,**不消费** theme/examples——无同步无比对(旧 `sync-shared.mjs` 方向描述失实、pairs 含已删文件、真跑必崩,2026-11-22 退役);防漂移靠唯一源纪律:改 skeleton 即改源。主代码 import 示例区直接 fail(guard 边界) |
-| **tsc 静态引用检查**(guard 内置) | ✅ | `tsconfig.json`(lenient) | esbuild 不查标识符引用(坑 #15);骨架零 client 包运行时依赖后,自维护类型面(vendor.d.ts)已随之退役 |
+| **tsc 静态引用检查**(guard 内置) | ✅ | `tsconfig.json`(src,lenient)+ `tsconfig.host.json`(Host 半区,checkJs) | esbuild 不查标识符引用(坑 #15);`node --check` 也只查语法(坑 #22)。src 侧全量类型检查;Host 侧只拦「找不到名字 / 导入成员不存在 / 相对路径写错」;骨架零 client 包运行时依赖后,自维护类型面(vendor.d.ts)已随之退役 |
 | **插件数据目录**(升级不丢数据) | ✅ | `skeleton/service/db.mjs` | 数据落 `<profile根>/data/<包名>/`(向上找 dsh.profile 标记推导)——GitHub/npm 安装的包目录在 update 时会被整体替换,数据放包内=升级即清空;link 安装回退包内。表结构演进用 PRAGMA user_version + 迁移步骤,勿裸改 CREATE TABLE |
 | **session projection**(会话派生状态) | ✅(骨架固件;真机探针数值与会话规模一致 ✓ 2026-11-23;fork 场景由实战 session-inspector 双向实证) | `skeleton/service/session-stats.mjs` + 官方 action-cards | Host 半区 `ctx.sessionProjections.register({key,stateVersion,stateSchema,init,apply,wire})`;`apply` 纯+同步,不关心的事件返回同一引用;`state` 必须 plain JSON;**fork 守卫必须加**:`init` 存下 `inheritedEventCount`,`apply` 首行 `if (event.seq < state.inheritedEventCount) return state`(否则 fork 会话把父历史算成自己的,静默偏大不报错);改折叠语义必须 bump `stateVersion`;客户端 `useProjection(key)` 读成品值不折叠事件;`stateSchema`/`viewSchema` 必须是真 zod(擦除契约只要 `parse()`,但手搓假 schema 在冷读/导出路径炸);key 从未发布时 `useProjection` 读到 `undefined`——是值不是错误,组件可先订阅后等值;⚠️ `main` 插槽的 `standardProps` **没有** `useProjection`(只有 `sidebar.right.pane.tab` 等有,cordis_inspect 实测) |
 | **右侧栏 tab 类型**(`sidebarRightTabs`) | ✅(骨架示例 + 工具箱双实证) | `skeleton/src/examples/SessionLinkageTab.tsx` | `ctx.sidebarRightTabs.register({id,kind,title,guide})` 注册**类型**,再往 `sidebar.right.pane.tab` / `.title` 两个 keyed 槽注册 body/title(key = type 的 id);⚠️ **`guide` 省略 = 不上 guide 页 = 界面打不开**(官方源码注 "Omit to stay off it",注册仍报 success) |
 | **探针工具**(自检模式) | ✅ 建议采用 | 本仓 `wbt_scaffold` / `wbt_uninstall` | 给插件注册一个"读内部状态"的工具,让 agent 直接断言数值而非肉眼看 UI——能抓出静默 bug(数值看着合理但偏大);见 §8 第 9 条 |
 | **零构建双面包**(纯 JS 手写产物形态) | ✅ | 实战 `dsh-session-inspector`(279 行)+ 官方 `templates/decoration` | 无 src/lib/构建配置,`index.js`/`client.js` 直接是出货形态;client 侧无 JSX 转换,用 `React.createElement`;不需要 TS/JSX 时这是最短路径(实战出处:dsh-plugin-field-notes.md §3) |
 | **本地插件重载手法**(`set_bundle` 关→开) | ✅ | 实战验证 | 比 `install_bundle` 更可控(不重跑 pnpm),每次 `application` 结果明确可见;本地 link 插件改代码后 关→开 触发 Loader 重算(实战出处:field-notes §4) |
-| **图标命名:npm 镜像与运行时不同步** | 🔶 | 实测(dsh-ai-toolbox) | npm 发布包 62 个唯一图形 vs 运行时 seed 表 96+,命名不一致——选图标以**运行时实测**为准(在浏览器里枚举),npm 文档仅参考 |
+| **图标命名** | ✅(已随 vendored 反转消解) | `skeleton/src/design/icons-data.ts` | 图形名以 vendored 数据为准(从 harness 源码 `artwork.ts` 物化,106 glyph × 2 权重;`npm run vendor-icons` 重提取),不再依赖 npm 镜像包或在浏览器里枚举 |
 | **V8 新版 SyntaxError 不带 position** | 🔶 | dev-toolbox JsonFormatter | Node 24/V8 新版错误对象无 position 字段,行号反推失效——兜底方案:递归下降结构扫描器(只定位不建值) |
 | **插件级 Config + locale**(示范已入骨架) | ✅ | `skeleton/index.js`(Config)+ `skeleton/src/locales.ts` | Config=Schema.object → apply(ctx, config) 第二参;locale=inject 'locale' + ctx.locale.register/bind 经 inject face 下发 t;**配置表单 UI 需自绘**(plugins.row.config 插槽,契约见 AGENTS.md) |
 | `shell.overlay` / `shell.bottom` 插槽 | ✅ | 封板线 main:src/client.tsx(P1-3) | 加法插槽,不替换官方内容;skeleton 未示范(例子够用) |
@@ -440,7 +457,7 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 |---|---|---|---|
 | 0.2.1-rc.5 | 2026-11-03 | 初始验证基线 | 首版 skeleton + 手册;8 工具 / 5 面板 / 数据服务全链路验证通过 |
 | 0.2.2-rc.1 | 2026-11-08 | npx 缓存静默升级(非主动升级)。**破坏性变化:plugins.row.config 的 form 面改为裁剪形态 `{ state, mutate(ops, revision) }`**(rc.5 的 getSnapshot/subscribe/set 被取代,op 形状 `{op:'set',path:['字段'],value}`);且本环境实测内置插件(如子智能体)的配置表单同样不渲染。根因定位到机制层:表单绑定条件是 ui-settings 的 describe 镜像(snapshot.view.namespaces)包含该插件 ns——镜像由设置页的 describe 读喂入,插件管理页自身不触发读取;**结论:非样板缺陷,系官方子系统装配行为,待 dsh 后续版本复查**(契约按官方 config-form-types.ts 已对齐) | 隐式全量验证:9 页示例 / 双门禁(guard+tsc+冒烟) / Config+locale / SSE 流式 / 两次 AI 实战(dsh-test、dsh-test-2)均在本版通过;engines 范围 >=0.2.0 <0.3 兼容,无需修订 |
-| 0.2.3-alpha.1 | 2026-11-24 | **仅文档差异核实,运行时未验证**(用 `--version` 抓两版 dsh-doc 后 `diff`):① 新增 `references/dsh-version.md`(engines.dsh 声明细则),host-plugin.md 改为指向它;② 检查工具更名——`cordis_inspect_list` / `cordis_inspect_query` 合并为 `cordis_inspect`;③ 其余引用过的规则(host-plugin 元数据清单、practices「不得 require Harness Client 包」与主题 token、artwork、verification、tool-design、upgrading)逐字未变 | 升到本版后:手册与台账里的检查命令改用 `cordis_inspect`;engines.dsh 声明按 dsh-version.md 复核;跑完整验证工作流后再放开 engines |
+| 0.2.3-alpha.1 | 2026-11-25 | **仅文档差异核实,运行时未验证**(`--version` 抓两版 dsh-doc 后逐词 diff;11-24 的首版记录因截断 diff 输出漏了 ③④,本次纠正):① 新增 `references/dsh-version.md`(engines.dsh 声明细则);② 检查工具合并——`cordis_inspect_list` / `cordis_inspect_query` → `cordis_inspect`(省略 `query` 发现目录,查询用 `query: { platform, provider, method, input }`);③ **Host 改动的生效方式变了**:rc.5「替换已安装包需重启才能加载新模块」→ alpha.1「文件变更(含 link 目录)在下一次 profile 重组时被拾取、无需重启;`set_plugin` 置 `enabled: true` 即触发重组」;④ locate-docs.md 新增运行时版本探测(`cordis_inspect` 的 Host `Runtime` provider 有 `getVersion`),并提醒 profile 的 node_modules 里的 dsh 副本可能过期;⑤ packages.md 包清单更新。**未变**:host-plugin 元数据清单、practices「不得 require Harness Client 包」与主题 token、artwork、verification、tool-design、upgrading | 升到本版后:手册与台账里的检查命令改用 `cordis_inspect`;Host 改动按新口径不必重启(先实测);engines.dsh 按 dsh-version.md 复核;生成器的版本探测可改读 `Runtime.getVersion`(比 npx 缓存推测准;API 未核实);跑完整验证工作流后再放开 engines |
 
 ---
 

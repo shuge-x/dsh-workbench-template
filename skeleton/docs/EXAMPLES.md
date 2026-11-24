@@ -8,14 +8,16 @@
 1. 先读下面这张「红线映射表」——这是不偏离 dsh 的底线;
 2. 按意图查示例页:打开「示例·工作台」面板看到真实渲染效果,再对照源码;
 3. 抄的是范式(结构/状态处理/样式用法),写进 `src/pages/` 你的业务页;
-4. 完整的真实工作台参考:样板项目 dsh-workbench-sample(单店经营面板 = 全部范式组装后的样子)。
+4. 样板项目 dsh-workbench-sample(单店经营面板)已冻结于 v0.4.0,其代码含**已被官方禁用的旧机制**(import Harness Client 图标包)——
+   只作历史教学参照,不得照抄;现行范式以本目录与 AGENTS.md 为准。
 
 ## 红线映射表(每条红线都有示例页演示正确做法)
 
 | 红线(dsh 合规要求) | 演示它的示例 | 说明 |
 |---|---|---|
-| 页面根容器必须是 `.wb-page`(样式作用域根) | 全部 7 页 | 缺失则外壳按钮默认样式漏入(坑 #14) |
+| 页面根容器必须是 `.wb-page`(样式作用域根) | 全部 9 页 | 缺失则外壳按钮默认样式漏入(坑 #14) |
 | 可选参数省略 `required` 字段,禁止 `required: false` | FormPage 的提交注释 | 坑 #1:写了直接 JsonSchemaError 注册被拒 |
+| `defineTool` 的 `parameters` 是**逐属性映射**,不是 JSON Schema 对象 | `index.js` 的 wb_region_summary / wb_latest;`service/session-stats.mjs` 的探针(`parameters: {}`) | 坑 #21:写错是整插件级失败——同批工具与投影一起消失;可抄范例见 playbook §6.2 |
 | 数据走同源前缀路由(`/wb-api/*`),零 CORS、零 sidecar 端口 | api.ts + FormPage 注释 | Host 半区 webServer prefix(借鉴 dsh-media-desk) |
 | 图标用官方图形 vendored 快照(WbIcon 按 glyph 引用 sprite);先到图标规范页搜索,没有贴合图形才自绘(放 src/icons.tsx 并注明) | IconsPage + theme.ts 的 mountIconSprite | 素材 vendored 于 src/design/icons-data.ts(官方 MIT);禁 import Harness Client 包(practices.md);currentColor 自动适配主题 |
 | effect 必须可清理(样式/表/sprite) | theme.ts / ExampleWorkbench 的 ctx.effect | 卸载残留会造成幽灵样式与重复 id |
@@ -52,7 +54,7 @@ StreamAiPage 依赖 `index.js` 的 `POST /ai-stream` 路由与 `service/ai.mjs`(
 ## 整体删除示例(两行 + 一个目录)
 
 1. 删 `src/examples/` 目录;
-2. 删 `src/client.tsx` 里的两行:`import { attachExamples } from './examples'` 与 `attachExamples(ctx)`;
+2. 删 `src/client.tsx` 里的两处:`import { attachExamples } from './examples'` 与 `if (SHOW_EXAMPLES) attachExamples(…)` 那一行;
 3. `npm run build && npm run guard` 应全绿——有任何报错说明主代码耦合了示例(这正是 guard 的职责)。
 
 `src/theme.ts` 是共享资产,**不随示例删除**——它是你的设计系统起点。

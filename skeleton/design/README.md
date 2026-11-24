@@ -1,7 +1,7 @@
 # design/ — 设计语言库
 
 每个 `.md` 是一套完整的设计语言(designmd.ai 格式:YAML tokens + 哲学 + Do/Don't)。
-**骨架零改动**:换设计 = 换一份 md + 让 AI 按其 tokens 更新 theme.ts。
+各套设计的取值另有**运行时包**(`src/design/variants.ts`),由切换器即时应用——**换设计不需要改 `src/theme.ts`**。
 
 ## 库存
 
@@ -13,30 +13,37 @@
 | `DESIGN-drafito.md` | 商店绿(用户珍藏) | 电商/订阅商店——白画布、祖母绿信号色、药丸按钮、会员卡签名组件;含完整暗色主题与响应式全档 |
 
 > **关于 DESIGN-drafito.md**:原文一字未改收录(用户珍藏)。注意它使用**自己的 token 命名**
-> (colors.primary / ink / surface / store-panel…,而非 wb- 的 bg/card/ink-2)——AI 更新 theme.ts 时
-> 按语义映射:bg→bg、ink→ink、primary→accent、line→border、surface→card。语义一一对应,可放心翻译。
+> (colors.primary / ink / surface / store-panel…,而非 wb- 的 bg/card/ink-2)。往 `src/design/variants.ts` 写它的覆盖包时
+> 按语义映射:bg→`--wb-bg`、surface→`--wb-card`、surface-2→`--wb-card-2`、border→`--wb-line`、
+> ink / ink-2 / ink-3→`--wb-ink` / `--wb-ink2` / `--wb-ink3`、primary→`--wb-accent`、success/warning/danger→`--wb-ok/warn/err`。
+> 语义一一对应,可放心翻译。
 
-## 换设计(三步,AI 可代办)
+## 换设计
 
-1. 从本目录选一份变体,复制其内容覆盖项目根目录的 `DESIGN.md`
-2. 让 AI 按该变体的 YAML tokens 更新 `src/theme.ts` 的对应值(token 名不变,只换值)
-3. `npm run build` → 刷新浏览器
+**随时切换(用户操作,零改动)**:页面顶栏的切换器 `DesignSwitcher`(`src/design/switcher.tsx`)在各变体间即时切换——
+覆盖包以 `html[data-wb-variant="<id>"]` 为作用域,localStorage 记住选择。
+固件不预置页面,所以这个组件默认没有被挂载;第一个业务页面的顶栏右侧要放 `<DesignSwitcher />`(AGENTS.md 工作流第 2 步)。
 
-## 运行时包(机器形态)
+**改默认设计(一次性决定)**:
 
-每套设计的**运行时数据包**在 `src/design/variants.ts`——与这里的 md 契约一一对应:
-**加一套设计 = md(契约)+ variants.ts 包(机器)两个文件同源配对**。切换器在运行时
-应用对应包的变量覆盖(html[data-wb-variant] 作用域),即时生效、localStorage 记忆。
+1. 从本目录选一份变体,用它覆盖项目根目录的 `DESIGN.md`(契约文档——AI 写 UI 时读的就是它)
+2. `src/design/switcher.tsx` 里把 `DEFAULT_VARIANT` 改成该变体的 id(只有这一处)
+3. `npm run build` → 刷新浏览器。`src/theme.ts` 不用动:它是所有变体共享的基线 token 与组件类
 
-## 加一套新设计
+**调整某套设计本身的取值**:改 `src/design/variants.ts` 里该变体的覆盖包(运行时生效),并同步对应的
+`DESIGN-<风格>.md` 的 YAML(契约)。两处同源配对——只改一处,文档与实现就漂移了。
 
-1. 复制任一现有变体为 `DESIGN-<风格名>.md`,改 YAML 与正文
-2. **token 名保持稳定**(bg/card/line/ink/ink-2/accent/语义色)——变的只有值;
-   theme.ts 的变量名不变,所以任何设计语言都能无痕接入
-3. 补充进上表
+## 加一套新设计(两个文件同源配对)
+
+1. 新建 `DESIGN-<风格名>.md`:复制任一现有变体,改 YAML 与正文(契约)
+2. 在 `src/design/variants.ts` 的 `VARIANTS` 里加一个运行时包 `{ id, label, css }`,css 以
+   `html[data-wb-variant="<id>"] .wb-page { … }` 为作用域覆盖 token(机器)
+3. **token 名保持稳定**(bg / card / line / ink / ink2 / accent / 语义色)——变的只有值与少量结构覆盖;
+   变体只在 `.wb-page` 上覆盖变量,所以页面与示例源码都不用改
+4. 补充进上表
 
 ## 纪律
 
-- 示例面板与 examples 源码是**范式**(结构与行为),DESIGN.md 是**视觉**(颜色/字排/密度)——两层独立
-- 换 DESIGN.md 不改 examples 源码;示例的渲染效果会自然跟随 theme.ts 的新值
+- 示例面板与 examples 源码是**范式**(结构与行为),`DESIGN.md` 是**视觉**(颜色/字排/密度)——两层独立
+- 换 `DESIGN.md` 不改 examples 源码;示例的渲染效果会自然跟随当前生效的变体取值
 - YAML 里 `{token.refs}` 引用一律不写死裸值

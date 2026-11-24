@@ -16,7 +16,7 @@ export function modelInfo(ctx) {
 }
 
 /** 流式内核:逐段 yield {type:'delta',text},结束 yield {type:'done',model};失败抛错。 */
-export async function* streamChat(ctx, { system, user, maxTokens = 4000, signal } = {}) {
+export async function* streamChat(ctx, { system, user, maxTokens = 4000, signal } = /** @type {{ system?: string, user?: string, maxTokens?: number, signal?: AbortSignal }} */ ({})) {
   const info = modelInfo(ctx)
   if (info === null) throw new Error('当前没有可用模型(未配置 API Key 或模型未选择)')
   const llm = ctx.get('llm')

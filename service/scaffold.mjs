@@ -75,7 +75,16 @@ export async function scaffoldProject({ target, name, id } = {}) {
   const playbookSrc = join(SKELETON_DIR, '..', 'docs', 'dsh-plugin-playbook.md')
   if (existsSync(playbookSrc)) {
     mkdirSync(join(t, 'docs'), { recursive: true })
-    copyFileSync(playbookSrc, join(t, 'docs', 'dsh-plugin-playbook.md'))
+    const playbookDst = join(t, 'docs', 'dsh-plugin-playbook.md')
+    copyFileSync(playbookSrc, playbookDst)
+    // 手册是以模板仓库视角写的:进了生成项目,`skeleton/xxx` 路径就是本项目的 `xxx`(项目即骨架的拷贝)。
+    // 不处理的话,开发 AI 照着「参考实现: skeleton/src/…」找不到文件
+    const raw = readFileSync(playbookDst, 'utf8')
+    const h1End = raw.indexOf('\n')
+    const note = '\n> 本手册随项目附带自 dsh 工作台模板仓库。文中说的 skeleton 指本项目的来源——**本项目就是骨架的一份拷贝**\n'
+      + '> (路径与示例里的包名已按本项目改写)。\n'
+    writeFileSync(playbookDst, raw.slice(0, h1End) + note + raw.slice(h1End).split('`skeleton/').join('`'))
+    replaceIn(playbookDst, [['dsh-myworkbench', n]]) // 示例里的骨架占位包名 → 本项目真名
   }
 
   replaceIn(join(t, 'package.json'), [['dsh-myworkbench', n]])
