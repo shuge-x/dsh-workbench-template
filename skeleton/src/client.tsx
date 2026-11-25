@@ -1,6 +1,6 @@
 /**
  * 工作台骨架 — client 半区(唯一的 dsh 耦合点)。
- * 改名点:CSS 前缀 wb-、包名与面板 id(由脚手架替换 dsh-myworkbench)、品牌文案与展示元数据(locale/、src/brand.tsx)。
+ * 改名点:CSS 前缀 wb-、包名与面板 id(由脚手架替换 dsh-myworkbench)、展示元数据(locale/、icon.svg)。
  *
  * 注册分两段:
  *  - PANELS:你的业务面板(主代码,长期演进)——侧栏默认只有你的面板
@@ -13,7 +13,6 @@ import { THEME_CSS, mountIconSprite } from './theme'
 import { VARIANT_CSS, applyVariant } from './design/switcher'
 import { dicts, NS_HOME } from './locales'
 import { CSS } from './styles'
-import { BrandMark, BrandName } from './brand'
 import { ConfigPage } from './pages/ConfigPage'
 import { attachExamples } from './examples' // ← 示例区唯一 import;删除示例时连本行一起删
 
@@ -43,14 +42,18 @@ export function apply(ctx: DshClientContext): void {
     return () => { style.remove() }
   }, 'myworkbench: styles')
   mountIconSprite(ctx)
-  applyVariant() // 应用已保存的设计变体(html data 属性);切换控件由业务页面自己挂载(AGENTS.md 工作流第 2 步)
+  // 应用已保存的设计变体。<html> 上的 data 属性是文档级改动:放进 effect,卸载时清掉;
+  // 切换控件由业务页面自己挂载(AGENTS.md 工作流第 2 步)
+  ctx.effect(() => {
+    applyVariant()
+    return () => { delete document.documentElement.dataset.wbVariant }
+  }, 'myworkbench: design variant')
   // 本地化:注册命名空间字典;页面经 inject face 拿 t(改动语言在壳设置里即时生效)
   ctx.effect(() => ctx.locale.register(NS_HOME, dicts[NS_HOME]!), 'myworkbench: locale')
 
-  // 品牌位(可选;不需要就删掉这两行)。注意:0.2.2-rc.5 的默认 web 组合装载了官方品牌包 ui-brand-official,
-  // 它占着这两个插槽,所以这里注册了也不会显示——替换品牌要在组合层面不装载官方包(profile 级决定),见 playbook §11
-  ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({ name: 'sidebar.brand.mark' }, BrandMark))
-  ctx.slots.inject('sidebar.brand.name', () => ctx.slots.register({ name: 'sidebar.brand.name' }, BrandName))
+  // 不要往 sidebar.brand.mark / sidebar.brand.name 注册(坑 #28):默认 web 组合下这两个插槽被官方品牌包
+  // ui-brand-official 占着——注册了不显示,而且会让热更新后整个插件停在卸载态(重建 client.js 后界面消失,
+  // 直到刷新页面)。换品牌是 profile 级的组合决定,见 playbook §11
 
   // 主面板 + 侧边栏入口(同一 id)
   for (const p of PANELS) {

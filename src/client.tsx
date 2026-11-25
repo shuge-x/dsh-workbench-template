@@ -8,7 +8,6 @@
 import type { ReactNode } from 'react'
 import type { DshClientContext } from './shim'
 import { BI_CSS } from './styles'
-import { BrandMark, BrandName } from './brand'
 import { ScaffoldPage } from './pages/ScaffoldPage'
 import { IconFolderPlus } from './icons'
 
@@ -28,9 +27,7 @@ export function apply(ctx: DshClientContext): void {
     return () => { style.remove() }
   }, 'workbench-template: styles')
 
-  // 品牌位
-  ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({ name: 'sidebar.brand.mark' }, BrandMark))
-  ctx.slots.inject('sidebar.brand.name', () => ctx.slots.register({ name: 'sidebar.brand.name' }, BrandName))
+  // 不往 sidebar.brand.* 注册:默认 web 组合下被官方品牌包占用,注册了不显示,且会让热更新后插件停在卸载态(坑 #28)
 
   for (const p of PANELS) {
     const PanelIcon = p.Icon

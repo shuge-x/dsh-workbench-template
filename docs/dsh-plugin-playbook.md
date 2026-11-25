@@ -308,6 +308,7 @@ export function apply(ctx) {
 | 25 | **运行时切换设计语言只换得了颜色**:变体包定义了圆角、数字字体、序号颜色、焦点环等 token,`theme.ts` 里却全是写死的值(卡片 14px、衬线 Georgia…),变体覆盖全是空转——契约文档明明写着终端风是 8px 圆角 | 凡变体会改的取值一律 `var(--wb-*)`,基线块补齐这些 token 的默认值;guard 增「设计语言完整性」检查(变体 token 必须有基线定义且被主题消费,页面直取型除外) |
 | 26 | **请求层把一切失败折成 null,分发器只会回 200 或 500**:手册要求页面区分「无权限」与「错误」两种状态,可前端拿不到状态码;业务校验失败只能回 500 或自己改分发器(实战中开发 AI 确实自己改了) | `src/api.ts`:`get / post / put / patch / del / postStream`,失败抛 `ApiError`(`.status`:401/403 = 无权限,0 = 不可达);`service/http.mjs` 的 `HttpError` 让路由按 4xx 回应;请求体不是合法 JSON 回 400 |
 | 27 | **侧栏品牌位在 0.2.2-rc.5 的默认 web 组合下不显示**:骨架往 `sidebar.brand.mark/name` 注册了品牌,机制清单标着已实证,实战中改了 `brand.tsx` 却看不到——默认组合装载了官方品牌包 `ui-brand-official`,它占着这两个插槽(其 README:自带身份的部署应不装载本包、另组一个包来占位) | 标为 ⛔:替换品牌是 profile 级的组合决定,不是插件里改几行能解决的;向用户如实说明,不要承诺「改 brand.tsx 就能换品牌」 |
+| 28 | **往侧栏品牌位注册会破坏热更新**:`apply()` 里有 `ctx.slots.inject('sidebar.brand.mark' / 'sidebar.brand.name', …)` 时,实例运行中每重建一次 `client.js`,插件就被「拆、挂、拆、挂、拆」,最后停在卸载态——界面消失,控制台与宿主日志都没有任何报错,刷新页面才恢复(2026-11-25 实战发现)。官方装饰模板在同一实例里热更新正常,所以不是宿主的毛病;二分实测:只留样式 / 加图标表 / 加本地化注册都正常,一加品牌位就复现;只去品牌位两行、其余全留即恢复 | 不要往 `sidebar.brand.*` 注册(默认组合下本来就被官方品牌包占着,坑 #27);骨架已删掉这两行和 `src/brand.tsx`。排查口诀:**重建后界面消失、刷新才回来** = `apply()` 里有品牌位注册 |
 
 ---
 
@@ -333,6 +334,8 @@ export function apply(ctx) {
     "用户真的看到"必须浏览器实测——报告验证结论时把这两层分开说(field-notes §6)
 11. **自动化断言前的两个准备**:全新 profile 首次打开会弹「预览版说明」遮罩,先关掉再断言;
     `./start.sh` 被工具或代理调用时(标准输出不是终端)不再弹浏览器窗口,地址在输出里
+12. **体系合规核对**(维护者工具,实战验收用):`python3 <模板仓>/scripts/compliance-audit.py <开发完的项目> <基线目录>`
+    ——逐项核对红线与默认策略是否用对,输出 ✓/✗ 清单;基线的取法见脚本头注释。它是启发式的,命中后要看原文
 
 ---
 
@@ -405,6 +408,8 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 但它读完手册与源码后报出十几处「手册与实际不符」,逐条核实全部属实并已回填(坑 #23–#27、§11 各行、§6.1 / §6.2)。
 成本:合计约 4486 万 token、84 分钟(入职 184 万 / 11 分钟,开发与验证约 4300 万 / 73 分钟)——入职要求读完 9 个
 示例页源码,是其中最大的一块。未覆盖:agent 工具的模型端到端调用(要在真实会话里发消息,没做)。
+子代理另报「实例运行中重新构建会让插件界面消失」,它只能描述现象;随后在同一实例上复现,并用二分定位到骨架
+`apply()` 里的品牌位注册(坑 #28)——已修复,并带着面板、示例区、联动 tab 实测通过。
 
 ## 11. 机制验证清单(dsh 能力 × 实证状态)
 
@@ -416,7 +421,7 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 | client 闭包工厂 bundle(esbuild 单文件) | ✅ | `build.mjs` | 运行时外部依赖只有 react/jsx-runtime(种子表 §4) |
 | 主面板 `main`(keyed) | ✅ | `src/client.tsx` | key=面板 id;`inject` 可向组件传 navigate 等回调 |
 | 侧边栏入口 `sidebar.panellist` | ✅ | `src/client.tsx` | order 负数可排在官方「插件」前;自动进「更多」菜单 |
-| 品牌替换 `sidebar.brand.mark/name` | ⛔(0.2.2-rc.5 默认组合下不显示) | `src/brand.tsx`(注册了但不生效) | 默认 web 组合装载官方品牌包 `ui-brand-official`,占着这两个插槽;替换要在组合层面不装载它(profile 级决定)。坑 #27 |
+| 品牌替换 `sidebar.brand.mark/name` | ⛔(不要注册) | —(骨架已移除 `src/brand.tsx` 与注册代码) | 默认 web 组合装载官方品牌包 `ui-brand-official`,占着这两个插槽:注册了不显示(坑 #27),**而且会让热更新后整个插件停在卸载态**(坑 #28)。替换品牌要在组合层面不装载官方包(profile 级决定) |
 | 面板跳转 `layout.selectPanel` | ✅ | 经营分析落地页 | `'conversation'` 保留键可跳聊天 |
 | 会话注入提示词 | ⛔ | — | 无公开 API(提交权归用户);用"复制提示词+跳转会话"替代(#12) |
 | agent 工具 `defineTool` | ✅ | `index.js` | 可选参数省略 required;描述写数据范围与披露要求 |
@@ -424,7 +429,7 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 | ~~HTTP sidecar 独立端口~~ | ⛔ 已被上项替代 | — | 曾用 127.0.0.1:3777;缺点:CORS 白名单、端口分配、无鉴权。仅当目标 dsh 无 webServer 服务时考虑 |
 | SQLite(node:sqlite) | ✅ | `service/` | 造数失败删库重试;确定性 PRNG |
 | 插件管理 UI 识别 | ✅ | 插件页 | bundle 描述展示、启用开关 |
-| client.js rev/HMR | ✅ | — | client 改动刷新即生效;Host 改动需重启 |
+| client.js 热更新 | ✅(2026-11-25 实测并修复) | — | 实例运行时重建 `client.js`,壳在几百毫秒内拆掉旧插件并挂上新 bundle:样式、面板入口、会话联动 tab 全部回来,**不用刷新页面**(插件内的 React 状态会重置)。二分实测:带面板、示例区、联动 tab 的完整形态下 33 毫秒恢复;唯一会破坏它的是往 `sidebar.brand.*` 注册(坑 #28)。Host 半区改动的生效方式见 AGENTS.md「验证与运行」 |
 | npm pack 分发 | ✅ | prepack 钩子 | 装入全新 profile 实测通过 |
 | **ctx.llm Host 直调模型** | ✅ | `service/ai.mjs` | `ctx.get('agentDefaultModel').currentSelection()` 取选型 → `llm.prepareCall(...).stream()` 流式;不可用时显式降级(借鉴 dsh-media-desk);已用于「AI 解读」页 |
 | **SSE 流式到页面**(逐字输出) | ✅ | `index.js` `/ai-stream` + `src/api.ts` `postStream` | 路由自写响应(dispatch 返回 undefined 不包 JSON)→ `text/event-stream` 逐段转发 streamChat 增量;页面 ReadableStream 解析 `data:` 帧 |

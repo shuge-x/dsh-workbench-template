@@ -46,7 +46,7 @@ npm install      # 仅首次:本地 link 安装时,依赖必须在插件自己�
     ├── theme.ts         设计系统基线:wb- tokens + 组件类 + 图标 sprite
     ├── design/          设计语言的机器形态:variants.ts / switcher.tsx / icons-data.ts
     ├── icons.tsx        WbIcon(官方图形)+ 自绘图标
-    └── api.ts  locales.ts  shim.ts  brand.tsx  styles.ts
+    └── api.ts  locales.ts  shim.ts  styles.ts
 ```
 
 ## 开发
@@ -55,7 +55,7 @@ npm install      # 仅首次:本地 link 安装时,依赖必须在插件自己�
 全绿才算完成——`guard` 不只查语法:红线、边界、展示元数据、Harness Client 包禁令、Host 半区引用、
 渲染冒烟都在里面。
 
-- 改 `src/`(client.js):`npm run build` 后浏览器刷新即生效
+- 改 `src/`(client.js):`npm run build` 后壳的热更新会自动换上新插件,不用刷新(页面里的临时状态会重置)
 - 改 `index.js` / `service/`(Host 半区):新代码不会自动生效——重跑 `./start.sh`(同 profile 会自动重启旧实例),
   或经插件管理器对本插件 disable → enable;以激活判定为准
 

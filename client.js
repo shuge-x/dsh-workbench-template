@@ -360,41 +360,6 @@ var BI_CSS = String.raw`
 .tll-q-done:hover { filter: brightness(1.06); }
 `;
 
-// src/brand.tsx
-var import_jsx_runtime = require("react/jsx-runtime");
-function BrandMark({ size }) {
-  const s = size ?? 26;
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-    "span",
-    {
-      style: {
-        width: s,
-        height: s,
-        borderRadius: s * 0.3,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #4f6ef0 0%, #3a53c8 100%)",
-        color: "#fff",
-        fontWeight: 800,
-        fontSize: s * 0.5,
-        fontFamily: "'PingFang SC', sans-serif",
-        flex: "none",
-        boxShadow: "0 1px 3px rgba(58,83,200,.35)",
-        lineHeight: 1
-      },
-      children: "W"
-    }
-  );
-}
-function BrandName() {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { display: "inline-flex", alignItems: "baseline", gap: 3, whiteSpace: "nowrap", fontWeight: 700, fontSize: 15.5, letterSpacing: 0.3 }, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { color: "#4f6ef0" }, children: "dsh" }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { color: "currentColor" }, children: "\u5DE5\u4F5C\u53F0\u6A21\u677F" }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "9", height: "9", viewBox: "0 0 10 10", style: { position: "relative", top: -6 }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M5 0l1.1 3.1L9 5 6.1 6.4 5 9.5 3.9 6.4 1 5l2.9-1.9z", fill: "#4f6ef0" }) })
-  ] });
-}
-
 // src/pages/ScaffoldPage.tsx
 var import_react = require("react");
 
@@ -416,9 +381,9 @@ async function post(path, body) {
 var postScaffold = (payload) => post("/scaffold", payload);
 
 // src/icons.tsx
-var import_jsx_runtime2 = require("react/jsx-runtime");
+var import_jsx_runtime = require("react/jsx-runtime");
 function svg(path, size = 16, color = "currentColor", style) {
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
     "svg",
     {
       width: size,
@@ -435,18 +400,18 @@ function svg(path, size = 16, color = "currentColor", style) {
     }
   );
 }
-var IconCopy = (p) => svg(/* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "9", y: "9", width: "11", height: "11", rx: "1.5" }),
-  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M5 15V5a1.5 1.5 0 011.5-1.5H15" })
+var IconCopy = (p) => svg(/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { x: "9", y: "9", width: "11", height: "11", rx: "1.5" }),
+  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M5 15V5a1.5 1.5 0 011.5-1.5H15" })
 ] }), p.size, "currentColor", p.style);
-var IconFolderPlus = (p) => svg(/* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M3.5 6.5A1.5 1.5 0 015 5h4.2l1.8 2H19a1.5 1.5 0 011.5 1.5v9A1.5 1.5 0 0119 19H5a1.5 1.5 0 01-1.5-1.5z" }),
-  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M12 10.5v5" }),
-  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M9.5 13h5" })
+var IconFolderPlus = (p) => svg(/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3.5 6.5A1.5 1.5 0 015 5h4.2l1.8 2H19a1.5 1.5 0 011.5 1.5v9A1.5 1.5 0 0119 19H5a1.5 1.5 0 01-1.5-1.5z" }),
+  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12 10.5v5" }),
+  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M9.5 13h5" })
 ] }), p.size, "currentColor", p.style);
 
 // src/pages/ScaffoldPage.tsx
-var import_jsx_runtime3 = require("react/jsx-runtime");
+var import_jsx_runtime2 = require("react/jsx-runtime");
 function ScaffoldPage() {
   const [target, setTarget] = (0, import_react.useState)("");
   const [id, setId] = (0, import_react.useState)("");
@@ -558,16 +523,16 @@ function ScaffoldPage() {
     "\u6BCF\u4E2A\u65B0\u9875\u9762\u6CE8\u518C\u8FDB src/client.tsx \u7684 PANELS \u5E76\u5E26 .wb-page \u6839\u5BB9\u5668;",
     "\u6BCF\u6B21\u6539\u5B8C\u8DD1 npm run guard && npm run build,\u5168\u7EFF\u624D\u7B97\u5B8C\u6210;\u4EA4\u4ED8\u524D\u6309 AGENTS.md \u9A8C\u8BC1\u6E05\u5355\u8D70\u660E\u6697\u53CC\u4E3B\u9898\u4E0E UX \u81EA\u67E5\u3002"
   ].join("\n") : "";
-  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-page", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "tll-topbar", style: { paddingBottom: 0 }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-store-main", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "tll-store-row1", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "tll-store-name", children: "\u65B0\u5EFA\u5DE5\u4F5C\u53F0" }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "tll-store-row2", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "\u8F93\u5165\u76EE\u6807\u8DEF\u5F84,\u4ECE\u5185\u7F6E\u9AA8\u67B6\u751F\u6210\u4E00\u4E2A\u53EF\u8FD0\u884C\u7684 dsh \u63D2\u4EF6\u9879\u76EE(\u542B\u6570\u636E\u670D\u52A1\u4E0E\u793A\u4F8B\u9875\u9762)" }) })
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tll-page", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "tll-topbar", style: { paddingBottom: 0 }, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tll-store-main", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "tll-store-row1", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "tll-store-name", children: "\u65B0\u5EFA\u5DE5\u4F5C\u53F0" }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "tll-store-row2", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\u8F93\u5165\u76EE\u6807\u8DEF\u5F84,\u4ECE\u5185\u7F6E\u9AA8\u67B6\u751F\u6210\u4E00\u4E2A\u53EF\u8FD0\u884C\u7684 dsh \u63D2\u4EF6\u9879\u76EE(\u542B\u6570\u636E\u670D\u52A1\u4E0E\u793A\u4F8B\u9875\u9762)" }) })
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-body", style: { maxWidth: 860 }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-card", style: { padding: "20px 22px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "120px 1fr", gap: "14px 14px", alignItems: "center" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u76EE\u6807\u8DEF\u5F84 *" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tll-body", style: { maxWidth: 860 }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tll-card", style: { padding: "20px 22px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "120px 1fr", gap: "14px 14px", alignItems: "center" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u76EE\u6807\u8DEF\u5F84 *" }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
             "input",
             {
               className: "tll-search",
@@ -579,8 +544,8 @@ function ScaffoldPage() {
               }
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u63D2\u4EF6 id" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u63D2\u4EF6 id" }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
             "input",
             {
               className: "tll-search",
@@ -592,8 +557,8 @@ function ScaffoldPage() {
               }
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u5305\u540D" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u5305\u540D" }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
             "input",
             {
               className: "tll-search",
@@ -606,21 +571,21 @@ function ScaffoldPage() {
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginTop: 18, display: "flex", alignItems: "center", gap: 12 }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "tll-ai-btn", onClick: submit, style: { opacity: busy || target.trim() === "" ? 0.55 : 1 }, children: busy ? "\u751F\u6210\u4E2D\u2026" : "\u751F\u6210\u9879\u76EE" }),
-          err !== void 0 && err !== null && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { style: { color: "var(--tll-down)", fontSize: 12.5 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { marginTop: 18, display: "flex", alignItems: "center", gap: 12 }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "tll-ai-btn", onClick: submit, style: { opacity: busy || target.trim() === "" ? 0.55 : 1 }, children: busy ? "\u751F\u6210\u4E2D\u2026" : "\u751F\u6210\u9879\u76EE" }),
+          err !== void 0 && err !== null && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { color: "var(--tll-down)", fontSize: 12.5 }, children: [
             "\u2717 ",
             err
           ] })
         ] })
       ] }),
-      ok && result !== null && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-card", style: { padding: "20px 22px", marginTop: 16 }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { fontSize: 15.5, fontWeight: 650, marginBottom: 6 }, children: [
+      ok && result !== null && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tll-card", style: { padding: "20px 22px", marginTop: 16 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontSize: 15.5, fontWeight: 650, marginBottom: 6 }, children: [
           "\u2713 \u5DF2\u751F\u6210 ",
           String(result.files?.length ?? 0),
           " \u4E2A\u6587\u4EF6"
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)", marginBottom: 12 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)", marginBottom: 12 }, children: [
           "\u5305\u540D ",
           result.name,
           " \xB7 \u63D2\u4EF6 id ",
@@ -628,21 +593,21 @@ function ScaffoldPage() {
           " \xB7 \u5B98\u65B9\u89C4\u8303\u968F\u884C ",
           result.officialDocs ?? "\u2014"
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px dashed var(--tll-line)" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 13.5, fontWeight: 650, marginBottom: 8 }, children: "\u4E3B\u8DEF\u5F84:\u4EA4\u7ED9 AI \u5F00\u53D1" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)", lineHeight: 1.9, marginBottom: 10 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px dashed var(--tll-line)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: 13.5, fontWeight: 650, marginBottom: 8 }, children: "\u4E3B\u8DEF\u5F84:\u4EA4\u7ED9 AI \u5F00\u53D1" }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)", lineHeight: 1.9, marginBottom: 10 }, children: [
             "\u2460 \u7528 ClaudeCode / Codex / OpenCode \u6253\u5F00\u9879\u76EE\u76EE\u5F55",
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("br", {}),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
             "\u2461 \u7C98\u8D34\u4E0B\u65B9\u300C\u9996\u6B21\u4F1A\u8BDD\u63D0\u793A\u8BCD\u300D\u2014\u2014\u6784\u5EFA\u3001\u95E8\u7981\u3001\u5F00\u53D1\u8FED\u4EE3\u5168\u90E8\u7531 AI \u6309 AGENTS.md \u6267\u884C,\u4F60\u4E0D\u9700\u8981\u624B\u52A8\u6572\u547D\u4EE4",
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("br", {}),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
             "\u2462 \u60F3\u5728\u6D4F\u89C8\u5668\u91CC\u770B\u6548\u679C:\u8FD0\u884C ",
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("code", { children: "./start.sh" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("code", { children: "./start.sh" }),
             "\u2014\u2014\u4F60\u81EA\u5DF1\u8DD1\u6216\u8BA9 AI \u8DD1\u90FD\u53EF\u4EE5"
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "\u9996\u6B21\u4F1A\u8BDD\u63D0\u793A\u8BCD" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12, color: "var(--tll-ink2)" }, children: "\u590D\u5236\u5373\u7528,\u65E0\u9700\u4FEE\u6539\u2014\u2014\u7C98\u8D34\u540E AI \u4F1A\u8BFB\u624B\u518C\u5E76\u5411\u4F60\u8981\u9700\u6C42" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "\u9996\u6B21\u4F1A\u8BDD\u63D0\u793A\u8BCD" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontSize: 12, color: "var(--tll-ink2)" }, children: "\u590D\u5236\u5373\u7528,\u65E0\u9700\u4FEE\u6539\u2014\u2014\u7C98\u8D34\u540E AI \u4F1A\u8BFB\u624B\u518C\u5E76\u5411\u4F60\u8981\u9700\u6C42" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
               "button",
               {
                 className: "tll-pill-btn",
@@ -655,7 +620,7 @@ function ScaffoldPage() {
               }
             )
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("pre", { style: {
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("pre", { style: {
             background: "var(--tll-card2)",
             border: "1px solid var(--tll-line)",
             borderRadius: 10,
@@ -667,11 +632,11 @@ function ScaffoldPage() {
             whiteSpace: "pre-wrap"
           }, children: firstPrompt })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px dashed var(--tll-line)" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "\u53EF\u9009:\u5728 dsh \u91CC\u9884\u89C8\u8FD0\u884C" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12, color: "var(--tll-ink2)" }, children: "\u7ED9\u4F60\u4EBA\u5DE5\u63A7\u5236\u7528\u7684\u4E00\u952E\u811A\u672C:\u6784\u5EFA/\u521D\u59CB\u5316/\u767B\u8BB0/\u542F\u52A8,\u5E76\u7ED9\u51FA\u6FC0\u6D3B\u5224\u5B9A;\u5B9E\u4F8B\u5728\u540E\u53F0\u8FD0\u884C\u3002AI \u7528\u4E0D\u7528\u5B83\u4E0D\u53D7\u9650\u5236" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px dashed var(--tll-line)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontSize: 13.5, fontWeight: 650 }, children: "\u53EF\u9009:\u5728 dsh \u91CC\u9884\u89C8\u8FD0\u884C" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontSize: 12, color: "var(--tll-ink2)" }, children: "\u7ED9\u4F60\u4EBA\u5DE5\u63A7\u5236\u7528\u7684\u4E00\u952E\u811A\u672C:\u6784\u5EFA/\u521D\u59CB\u5316/\u767B\u8BB0/\u542F\u52A8,\u5E76\u7ED9\u51FA\u6FC0\u6D3B\u5224\u5B9A;\u5B9E\u4F8B\u5728\u540E\u53F0\u8FD0\u884C\u3002AI \u7528\u4E0D\u7528\u5B83\u4E0D\u53D7\u9650\u5236" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
               "button",
               {
                 className: "tll-pill-btn",
@@ -684,7 +649,7 @@ function ScaffoldPage() {
               }
             )
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("pre", { style: {
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("pre", { style: {
             background: "var(--tll-card2)",
             border: "1px solid var(--tll-line)",
             borderRadius: 10,
@@ -695,12 +660,12 @@ function ScaffoldPage() {
           }, children: `cd ${result.target ?? ""} && ./start.sh` })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tll-card", style: { padding: "16px 20px", marginTop: 16 }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 13.5, fontWeight: 650, marginBottom: 4 }, children: "\u5378\u8F7D\u5DF2\u751F\u6210\u7684\u9879\u76EE" }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 12, color: "var(--tll-ink3)", marginBottom: 10 }, children: "\u8F93\u5165\u751F\u6210\u9879\u76EE\u7684\u8DEF\u5F84,\u626B\u63CF\u5B83\u5728\u6240\u6709 profile \u91CC\u7684\u767B\u8BB0(\u542B\u9879\u76EE\u6539\u540D/\u79FB\u52A8\u7559\u4E0B\u7684\u5931\u6548\u767B\u8BB0),\u6309\u9700\u79FB\u9664\u3002 \u53EA\u52A8\u767B\u8BB0,\u4E0D\u5220\u76EE\u5F55\u2014\u2014\u4F60\u7684\u4EE3\u7801\u4E0E\u6570\u636E\u4FDD\u7559\u3002" }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "120px 1fr auto", gap: 12, alignItems: "center" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u9879\u76EE\u8DEF\u5F84" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tll-card", style: { padding: "16px 20px", marginTop: 16 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: 13.5, fontWeight: 650, marginBottom: 4 }, children: "\u5378\u8F7D\u5DF2\u751F\u6210\u7684\u9879\u76EE" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: 12, color: "var(--tll-ink3)", marginBottom: 10 }, children: "\u8F93\u5165\u751F\u6210\u9879\u76EE\u7684\u8DEF\u5F84,\u626B\u63CF\u5B83\u5728\u6240\u6709 profile \u91CC\u7684\u767B\u8BB0(\u542B\u9879\u76EE\u6539\u540D/\u79FB\u52A8\u7559\u4E0B\u7684\u5931\u6548\u767B\u8BB0),\u6309\u9700\u79FB\u9664\u3002 \u53EA\u52A8\u767B\u8BB0,\u4E0D\u5220\u76EE\u5F55\u2014\u2014\u4F60\u7684\u4EE3\u7801\u4E0E\u6570\u636E\u4FDD\u7559\u3002" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "120px 1fr auto", gap: 12, alignItems: "center" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u9879\u76EE\u8DEF\u5F84" }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
             "input",
             {
               className: "tll-search",
@@ -714,16 +679,16 @@ function ScaffoldPage() {
               }
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "tll-ai-btn", style: { opacity: scanBusy || uninstallPath.trim() === "" ? 0.55 : 1 }, onClick: scan, children: scanBusy ? "\u626B\u63CF\u4E2D\u2026" : "\u626B\u63CF" })
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "tll-ai-btn", style: { opacity: scanBusy || uninstallPath.trim() === "" ? 0.55 : 1 }, onClick: scan, children: scanBusy ? "\u626B\u63CF\u4E2D\u2026" : "\u626B\u63CF" })
         ] }),
-        found !== null && uninstallOutcomes === null && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { marginTop: 12 }, children: found.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u6240\u6709 profile \u91CC\u90FD\u6CA1\u6709\u8BE5\u8DEF\u5F84\u7684\u767B\u8BB0\u2014\u2014\u65E0\u9700\u5378\u8F7D\u3002" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)", marginBottom: 6 }, children: [
+        found !== null && uninstallOutcomes === null && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { marginTop: 12 }, children: found.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)" }, children: "\u6240\u6709 profile \u91CC\u90FD\u6CA1\u6709\u8BE5\u8DEF\u5F84\u7684\u767B\u8BB0\u2014\u2014\u65E0\u9700\u5378\u8F7D\u3002" }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontSize: 12.5, color: "var(--tll-ink2)", marginBottom: 6 }, children: [
             "\u627E\u5230 ",
             found.length,
             " \u6761\u767B\u8BB0:"
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }, children: found.map((r) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }, children: found.map((r) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
               "input",
               {
                 type: "checkbox",
@@ -733,27 +698,27 @@ function ScaffoldPage() {
                 }
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("b", { children: r.profile }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { style: { color: "var(--tll-ink2)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("b", { children: r.profile }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { color: "var(--tll-ink2)" }, children: [
               r.key,
               r.linkTarget ? ` \u2192 ${r.linkTarget}` : ""
             ] }),
-            r.stale && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "tll-pill", style: { color: "var(--tll-down)", background: "rgba(192,57,43,.1)" }, children: "\u5931\u6548(\u76EE\u5F55\u5DF2\u4E0D\u5B58\u5728)" })
+            r.stale && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "tll-pill", style: { color: "var(--tll-down)", background: "rgba(192,57,43,.1)" }, children: "\u5931\u6548(\u76EE\u5F55\u5DF2\u4E0D\u5B58\u5728)" })
           ] }, r.profile)) }),
-          selected.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { background: "var(--tll-card2)", border: "1px solid var(--tll-line)", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: 12.5, fontWeight: 650, marginBottom: 6 }, children: "\u6267\u884C\u540E\u5C06\u6D89\u53CA\u4EE5\u4E0B\u5185\u5BB9(\u5148\u770B\u6E05\u695A,\u518D\u786E\u8BA4):" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { fontSize: 12, lineHeight: 1.9, color: "var(--tll-ink2)" }, children: [
-              selected.map((profile) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginBottom: 6 }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("b", { style: { color: "var(--tll-ink)" }, children: [
+          selected.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--tll-card2)", border: "1px solid var(--tll-line)", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: 12.5, fontWeight: 650, marginBottom: 6 }, children: "\u6267\u884C\u540E\u5C06\u6D89\u53CA\u4EE5\u4E0B\u5185\u5BB9(\u5148\u770B\u6E05\u695A,\u518D\u786E\u8BA4):" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontSize: 12, lineHeight: 1.9, color: "var(--tll-ink2)" }, children: [
+              selected.map((profile) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { marginBottom: 6 }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("b", { style: { color: "var(--tll-ink)" }, children: [
                     "~/.dsh/profiles/",
                     profile,
                     "/package.json"
                   ] }),
                   " \u2014 \u79FB\u9664 dependencies \u767B\u8BB0\u4E0E bundles \u6761\u76EE"
                 ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("b", { style: { color: "var(--tll-ink)" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("b", { style: { color: "var(--tll-ink)" }, children: [
                     "~/.dsh/profiles/",
                     profile,
                     "/node_modules/"
@@ -761,31 +726,31 @@ function ScaffoldPage() {
                   " \u2014 \u79FB\u9664\u5BF9\u5E94\u7B26\u53F7\u94FE\u63A5"
                 ] })
               ] }, profile)),
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { children: "\u2713 \u4E0D\u53D8:\u9879\u76EE\u76EE\u5F55\u672C\u8EAB(\u4EE3\u7801\u4E0E\u6570\u636E\u5168\u90E8\u4FDD\u7559,\u662F\u5426\u5220\u9664\u7531\u4F60\u51B3\u5B9A)" }),
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { children: "\u2713 \u751F\u6548\u65B9\u5F0F:\u8BE5 profile \u7684\u5B9E\u4F8B\u91CD\u542F\u540E\u9762\u677F\u6D88\u5931;\u6D4F\u89C8\u5668\u5237\u65B0\u5373\u53EF\u770B\u5230" })
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { children: "\u2713 \u4E0D\u53D8:\u9879\u76EE\u76EE\u5F55\u672C\u8EAB(\u4EE3\u7801\u4E0E\u6570\u636E\u5168\u90E8\u4FDD\u7559,\u662F\u5426\u5220\u9664\u7531\u4F60\u51B3\u5B9A)" }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { children: "\u2713 \u751F\u6548\u65B9\u5F0F:\u8BE5 profile \u7684\u5B9E\u4F8B\u91CD\u542F\u540E\u9762\u677F\u6D88\u5931;\u6D4F\u89C8\u5668\u5237\u65B0\u5373\u53EF\u770B\u5230" })
             ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "tll-ai-btn", style: { opacity: uninstallBusy || selected.length === 0 ? 0.55 : 1 }, onClick: uninstallSelected, children: uninstallBusy ? "\u5378\u8F7D\u4E2D\u2026" : `\u786E\u8BA4\u5378\u8F7D\u9009\u4E2D\u7684 ${selected.length} \u6761` })
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "tll-ai-btn", style: { opacity: uninstallBusy || selected.length === 0 ? 0.55 : 1 }, onClick: uninstallSelected, children: uninstallBusy ? "\u5378\u8F7D\u4E2D\u2026" : `\u786E\u8BA4\u5378\u8F7D\u9009\u4E2D\u7684 ${selected.length} \u6761` })
         ] }) }),
-        uninstallOutcomes !== null && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { marginTop: 12, fontSize: 12.5, lineHeight: 1.9 }, children: uninstallOutcomes.map((o) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginBottom: 8 }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { style: { color: o.ok ? "var(--tll-up)" : "var(--tll-down)", fontWeight: 600 }, children: [
+        uninstallOutcomes !== null && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { marginTop: 12, fontSize: 12.5, lineHeight: 1.9 }, children: uninstallOutcomes.map((o) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { marginBottom: 8 }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { color: o.ok ? "var(--tll-up)" : "var(--tll-down)", fontWeight: 600 }, children: [
             o.ok ? "\u2713" : "\u2717",
             " ",
             o.profile
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { style: { color: "var(--tll-ink2)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { color: "var(--tll-ink2)" }, children: [
             " \u2014 ",
             o.error ?? (o.hints ?? []).join(" ")
           ] })
         ] }, o.profile)) })
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(IconCopy, { size: 12 }) })
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { display: "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(IconCopy, { size: 12 }) })
   ] });
 }
 
 // src/client.tsx
-var import_jsx_runtime4 = require("react/jsx-runtime");
+var import_jsx_runtime3 = require("react/jsx-runtime");
 var inject = ["slots"];
 var PANELS = [
   { id: "wt-scaffold", title: "\u65B0\u5EFA\u5DE5\u4F5C\u53F0", order: -20, Icon: IconFolderPlus, page: ScaffoldPage }
@@ -800,14 +765,12 @@ function apply(ctx) {
       style.remove();
     };
   }, "workbench-template: styles");
-  ctx.slots.inject("sidebar.brand.mark", () => ctx.slots.register({ name: "sidebar.brand.mark" }, BrandMark));
-  ctx.slots.inject("sidebar.brand.name", () => ctx.slots.register({ name: "sidebar.brand.name" }, BrandName));
   for (const p of PANELS) {
     const PanelIcon = p.Icon;
     ctx.slots.inject("main", () => ctx.slots.register({ name: "main", key: p.id }, p.page));
     ctx.slots.inject("sidebar.panellist", () => ctx.slots.register(
       { name: "sidebar.panellist", id: p.id, order: p.order, label: p.title },
-      (props) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(PanelIcon, { size: props.size ?? 16 })
+      (props) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(PanelIcon, { size: props.size ?? 16 })
     ));
   }
 }

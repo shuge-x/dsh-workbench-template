@@ -114,10 +114,11 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 5. 每个取数页面**四态备齐**:加载(骨架屏)/ 空态(给下一步动作)/ 错误(带重试)/ 无权限(明确提示)
 6. 完成门禁:`npm run guard && npm run build` 全绿才算完成
 7. **交付前把展示身份换成业务的**(官方 host-plugin.md:不留与交付插件无关的模板文案):`locale/zh.json` 与
-   `locale/en.json` 的 `meta.title` / `meta.description`(Plugins 页的标题与描述)、`src/brand.tsx` 的侧栏
-   品牌名、`package.json` 的 `description`;`icon.svg` 按需重画(官方 artwork.md:36×36、字标用路径、不画底板)。
-   名称以用户给的为准,没给就问。注意:侧栏品牌位在 0.2.2-rc.5 的默认 web 组合下被官方品牌包占用,
-   `src/brand.tsx` 改了也不会显示——用户要换品牌时,说明这是 profile 级的决定(不装载官方品牌包),见 playbook §11
+   `locale/en.json` 的 `meta.title` / `meta.description`(Plugins 页的标题与描述)、`package.json` 的 `description`;
+   `icon.svg` 按需重画(官方 artwork.md:36×36、字标用路径、不画底板)。名称以用户给的为准,没给就问。
+   **不要往侧栏品牌位(`sidebar.brand.mark` / `sidebar.brand.name`)注册**(坑 #28):默认 web 组合下它被官方
+   品牌包占用,注册了不显示,还会让热更新后整个插件停在卸载态。用户要换品牌时,说明这是 profile 级的组合决定
+   (不装载官方品牌包),见 playbook §11
 8. 交付前验证清单(对齐官方 docs/official/dsh-doc/references/verification.md,硬项不是可选项):
    - 起实例用 `./start.sh`(自动打印带 token 的地址,不要自己猎 token)。脚本结尾自带**激活判定**:
      `✓ 插件 Host 半区已激活` 才算启动成功;`✗ 激活失败` 时脚本非零退出——**地址能打开不等于插件活着**
@@ -165,7 +166,8 @@ npm run prepack      # guard + build(发包前自动跑)
 
 ## 验证与运行
 
-- **client.js(src/)改动**:dsh 实例不重启,浏览器刷新即生效(rev 机制)
+- **client.js(src/)改动**:不用重启实例,也不用刷新——重新构建后壳的热更新会自动换上新 bundle(该插件页面里的
+  React 状态会重置)。若重建后插件界面消失、刷新才回来,查 `apply()` 里有没有往 `sidebar.brand.*` 注册(坑 #28)
 - **Host(index.js/service/)改动**:新代码不会自动生效。让它生效的办法,按稳妥程度排——
   ① 重跑 `./start.sh`(同 profile 会自动重启旧实例,并重新给出激活判定);
   ② 实例在跑时,经插件管理器对本插件 disable → enable(0.2.2-rc.5 真机实测:不重启进程即可加载新代码)。
