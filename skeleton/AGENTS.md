@@ -15,11 +15,14 @@ index.js            Host 半区:webServer 前缀路由 /wb-api/*(同源数据服
                     · 配置的 UI 表单不是自动的:需注册 plugins.row.config 插槽自绘表单
                       (契约:form.{ state, mutate(ops, revision) },view='summary'|'page';
                        参考实现:本项目 src/pages/ConfigPage.tsx)
-service/            数据层:api.mjs(查询函数)/ db.mjs(SQLite)/ seed.mjs(首启造数)
+service/            数据层:api.mjs(查询函数)/ db.mjs(SQLite,带版本化迁移 MIGRATIONS)/ seed.mjs(首启造数)
+                    + http.mjs(HttpError:让路由按 4xx 回应)
                     + session-stats.mjs(会话联动固件:projection + 探针工具 wb_session_stats)
 src/client.tsx      Client 半区唯一 dsh 耦合点:PANELS 注册面板 + locale 字典注册(esbuild 单文件 bundle)
-src/locales.ts      本地化命名空间(zh/en 键一致);页面经 inject face 的 t() 取词
-src/theme.ts        设计系统实现:wb- tokens + 基础组件类 + 官方图标 sprite 挂载(共享资产)
+src/locales.ts      本地化命名空间(zh/en 键一致);页面可以经 inject face 的 t() 取词——是可选项,默认直接写中文(默认策略 3)
+src/theme.ts        设计系统(共享资产):wb- tokens + 基础组件类 + 图标 sprite 挂载。凡设计变体会改的取值
+                    (颜色/圆角/字体/行悬停/焦点环)都走 var(--wb-*);只追加词汇,不改既有类
+src/styles.ts       页面级公共样式(多个页面共用的布局片段)。不要在这里重定义 token 或覆盖 theme.ts 的组件类
 design/             ★ 设计语言库:各套 DESIGN 变体(工作台中性 / 终端风 / 纸感 / 商店绿)的契约文档。
                     换默认设计 = 选一份覆盖根目录 DESIGN.md + 改 src/design/switcher.tsx 的
                     DEFAULT_VARIANT 一处(见 design/README.md);不需要动 theme.ts
@@ -27,7 +30,8 @@ src/design/         设计语言的机器形态:variants.ts(各变体的 token �
                     切换器 DesignSwitcher)/ icons-data.ts(官方图形 vendored 数据,勿手改)
 src/icons.tsx       图标:WbIcon(按 glyph 名引用官方图形);自绘图标也放这里
 locale/ icon.svg    展示元数据:Plugins 页读的 meta.title / description 与图标(官方 host-plugin.md 要求)
-src/api.ts          前端请求层:同源 fetch 封装(get/post/stream)
+src/api.ts          前端请求层:get / post / put / patch / del / postStream(同源)。失败抛 ApiError(HTTP 状态码在
+                    .status:401/403 = 无权限,0 = 服务不可达)——页面的四态靠它区分
 src/pages/          ★ 你的业务页面(主代码,长期演进)。固件不预置任何页面——做哪几个面板、要不要
                     首页,开工时按用户需求设计,照 examples 范式实现后在 client.tsx 的 PANELS 注册
 src/examples/       示例区:9 个范式页 + 会话联动 tab(教学代码)。源码常驻供 AI 阅读,但默认不注册进侧栏
@@ -99,15 +103,21 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 2. 新建 `src/pages/XxxPage.tsx`,范式照对应示例页抄,内容换成业务。**第一个业务页面的顶栏右侧放
    `<DesignSwitcher />`**(from `./design/switcher`)——用户靠它即时切换设计语言;固件不预置页面,
    你不挂载,用户就看不到切换器。页面组件以 `Page` 结尾,且**不传 props 也要能渲染**(渲染冒烟会逐个
-   renderToString):渲染期不要直接读 `window` / `localStorage`,要读就包 try/catch(切换器组件即此写法)
-3. 在 `src/client.tsx` 的 `PANELS` 数组注册(id + 标题 + 图标 + page)
-4. 要真数据:`service/api.mjs` 加查询函数 → `index.js` 的 `routes` 加路由 → `src/api.ts` 加 fetch → 页面调用
+   renderToString):渲染期不要直接读 `window` / `localStorage`,要读就包 try/catch(切换器组件即此写法)。
+   页面级样式写在页面文件里导出的 CSS 常量(多页共用的放 `src/styles.ts`),由 `client.tsx` 的样式 effect 一并注入——
+   页面组件拿不到 `ctx`,不要自己往 `document.head` 塞 `<style>`;取值一律走 `var(--wb-*)`
+3. 在 `src/client.tsx` 的 `PANELS` 数组注册(id + 标题 + 图标 + page)。id 用「包名-面板名」:
+   主面板槽的 key 不能重复,不带前缀的 id 在多个工作台插件同装时会互相撞掉
+4. 要真数据:`service/api.mjs` 加查询函数 → `index.js` 的 `routes` 加路由(校验失败就
+   `throw new HttpError(400, '原因')`,分发器按 4xx 回应)→ 页面用 `src/api.ts` 的 get / post 等
+   (失败抛 ApiError,据 `status` 区分无权限与错误)。加表 / 改表:往 `service/db.mjs` 的 `MIGRATIONS` 末尾追加一步
 5. 每个取数页面**四态备齐**:加载(骨架屏)/ 空态(给下一步动作)/ 错误(带重试)/ 无权限(明确提示)
 6. 完成门禁:`npm run guard && npm run build` 全绿才算完成
 7. **交付前把展示身份换成业务的**(官方 host-plugin.md:不留与交付插件无关的模板文案):`locale/zh.json` 与
    `locale/en.json` 的 `meta.title` / `meta.description`(Plugins 页的标题与描述)、`src/brand.tsx` 的侧栏
    品牌名、`package.json` 的 `description`;`icon.svg` 按需重画(官方 artwork.md:36×36、字标用路径、不画底板)。
-   名称以用户给的为准,没给就问
+   名称以用户给的为准,没给就问。注意:侧栏品牌位在 0.2.2-rc.5 的默认 web 组合下被官方品牌包占用,
+   `src/brand.tsx` 改了也不会显示——用户要换品牌时,说明这是 profile 级的决定(不装载官方品牌包),见 playbook §11
 8. 交付前验证清单(对齐官方 docs/official/dsh-doc/references/verification.md,硬项不是可选项):
    - 起实例用 `./start.sh`(自动打印带 token 的地址,不要自己猎 token)。脚本结尾自带**激活判定**:
      `✓ 插件 Host 半区已激活` 才算启动成功;`✗ 激活失败` 时脚本非零退出——**地址能打开不等于插件活着**
@@ -135,8 +145,10 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
    默认启用;不需要就删——连同 index.js 里的调用与 `inject` 中的 `'sessionProjections'`。
    骨架自带的 SQLite/service 与 /ai-stream 保留但默认闲置;
    业务确实需要时再启用或业务化,不要提前改造。
-   数据落 `<profile根>/data/<包名>/`(升级/重装不丢);表结构演进用
-   PRAGMA user_version 记版本并写迁移步骤,不要裸改 CREATE TABLE。
+   数据落 `<profile 根>/data/<包名>/`(升级/重装不丢):profile 根取自宿主的 `ctx.baseUrl`,由 `index.js` 的
+   apply() 经 `configureDataDir()` 交给数据层——**不要改用环境变量**,Host 进程里读不到 `DSH_PROFILE_DIR`。
+   表结构演进:往 `service/db.mjs` 的 `MIGRATIONS` 末尾追加一步(幂等 DDL,`PRAGMA user_version` 记版本),
+   不改已发布的步骤,也不在别处另写 CREATE TABLE。
 5. **业务页面不放开发提示**:面向开发者的指引(如「加工具请进 registry」)
    写在 AGENTS.md / README 里,不渲染进业务页面——业务页面只呈现给最终用户的内容。
 

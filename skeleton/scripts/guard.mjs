@@ -203,6 +203,33 @@ if (existsSync(tscBin) && existsSync(hostTsconfig)) {
   fail('缺 tsconfig.host.json,Host 半区引用检查被跳过(坑 #22):从骨架恢复该文件')
 }
 
+// 设计语言库完整性:变体包(src/design/variants.ts)覆盖的每个 token,基线(theme.ts 的 .<前缀>-page)都要有定义,
+// 并且主题样式里要真的用 var() 消费它。缺定义 → 默认设计下页面用到它时取不到值;没人消费 → 切换设计语言时
+// 它不起作用(实战中发现:圆角、数字字体、序号色的变体覆盖全是空转,因为 theme.ts 里写死了取值)
+{
+  const variants = join('src', 'design', 'variants.ts'), theme = join('src', 'theme.ts')
+  if (existsSync(variants) && existsSync(theme)) {
+    const v = readFileSync(variants, 'utf8'), t = readFileSync(theme, 'utf8')
+    const prefix = (t.match(/\.([a-z0-9]+)-page \{/) || [])[1]
+    if (prefix === undefined) {
+      ok('跳过设计语言完整性检查(未识别出 CSS 前缀)')
+    } else {
+      const tok = new RegExp(`--${prefix}-[a-z0-9-]+(?=\\s*:)`, 'g')
+      const pack = new Set(v.match(tok) || [])
+      const baseBlock = (t.match(new RegExp(`\\.${prefix}-page \\{([\\s\\S]*?)\\}`)) || ['', ''])[1]
+      const base = new Set(baseBlock.match(tok) || [])
+      const used = new Set((t.match(new RegExp(`var\\(--${prefix}-[a-z0-9-]+`, 'g')) || []).map((x) => x.slice(4)))
+      const noBase = [...pack].filter((x) => !base.has(x))
+      // 页面直取型 token:本就是给页面 var() 直接用的,不要求主题组件消费它们(基线有定义即可)
+      const pageFacing = new Set(['ink3', 'card-2'].map((x) => `--${prefix}-${x}`))
+      const unused = [...pack].filter((x) => !used.has(x) && !pageFacing.has(x))
+      for (const x of noBase) fail(`设计 token ${x} 在变体包里被覆盖,但 theme.ts 的基线块没有定义它(默认设计下取不到值)`)
+      for (const x of unused) fail(`设计 token ${x} 在变体包里被覆盖,但 theme.ts 没有用 var() 消费它(切换设计语言时它不起作用)`)
+      if (noBase.length === 0 && unused.length === 0) ok(`设计语言完整(${pack.size} 个变体 token 均有基线定义;主题消费 ${[...pack].filter((x) => used.has(x)).length} 个,其余为页面直取型)`)
+    }
+  }
+}
+
 // 渲染冒烟:逐页面组件 renderToString(坑 #15 的运行时形态,渲染即崩)
 // 依赖未安装时冒烟脚本连 esbuild 都 import 不到;原因已在开头说明,这里不再叠一条「运行失败」
 if (existsSync('node_modules')) try {

@@ -1,6 +1,6 @@
 /**
  * 工作台骨架 — client 半区(唯一的 dsh 耦合点)。
- * 改名点:CSS 前缀 wb-、面板 id( wb-home )、品牌文案。
+ * 改名点:CSS 前缀 wb-、包名与面板 id(由脚手架替换 dsh-myworkbench)、品牌文案与展示元数据(locale/、src/brand.tsx)。
  *
  * 注册分两段:
  *  - PANELS:你的业务面板(主代码,长期演进)——侧栏默认只有你的面板
@@ -15,7 +15,6 @@ import { dicts, NS_HOME } from './locales'
 import { CSS } from './styles'
 import { BrandMark, BrandName } from './brand'
 import { ConfigPage } from './pages/ConfigPage'
-import { IconHome } from './icons'
 import { attachExamples } from './examples' // ← 示例区唯一 import;删除示例时连本行一起删
 
 /** 示例面板开关:默认关(业务侧栏只放你的面板);要看渲染效果改 true。 */
@@ -28,9 +27,10 @@ export const inject = ['slots', 'locale', 'sidebarRightTabs', 'sidebarRight']
 /**
  * 面板注册表:按业务需求增删行(页面范式照 src/examples/ 抄,注册模式见本文件与 AGENTS.md)。
  * 固件不预置任何面板——信息架构是开工 AI 与用户的设计决定。
+ * id 用「包名-面板名」:主面板槽的 key 不允许重复,两个工作台插件同装时,不带前缀的 id(如 'home')会互相撞掉。
  */
 const PANELS: { id: string; title: string; order: number; Icon: (p: { size?: number }) => ReactNode; page: () => ReactNode }[] = [
-  // 示例:{ id: 'wb-home', title: '首页', order: -20, Icon: IconHome, page: HomePage }
+  // 示例:{ id: 'dsh-myworkbench-home', title: '首页', order: -20, Icon: (p) => <WbIcon glyph="new-chat-outline" size={p.size} />, page: HomePage }
 ]
 
 export function apply(ctx: DshClientContext): void {
@@ -43,11 +43,12 @@ export function apply(ctx: DshClientContext): void {
     return () => { style.remove() }
   }, 'myworkbench: styles')
   mountIconSprite(ctx)
-  applyVariant() // 应用已保存的设计变体(html data 属性);切换控件在首页顶栏内
+  applyVariant() // 应用已保存的设计变体(html data 属性);切换控件由业务页面自己挂载(AGENTS.md 工作流第 2 步)
   // 本地化:注册命名空间字典;页面经 inject face 拿 t(改动语言在壳设置里即时生效)
   ctx.effect(() => ctx.locale.register(NS_HOME, dicts[NS_HOME]!), 'myworkbench: locale')
 
-  // 品牌位(可选;不需要就删掉这两行)
+  // 品牌位(可选;不需要就删掉这两行)。注意:0.2.2-rc.5 的默认 web 组合装载了官方品牌包 ui-brand-official,
+  // 它占着这两个插槽,所以这里注册了也不会显示——替换品牌要在组合层面不装载官方包(profile 级决定),见 playbook §11
   ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({ name: 'sidebar.brand.mark' }, BrandMark))
   ctx.slots.inject('sidebar.brand.name', () => ctx.slots.register({ name: 'sidebar.brand.name' }, BrandName))
 

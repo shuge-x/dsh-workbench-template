@@ -217,6 +217,9 @@ export function apply(ctx) {
 - **同源**:浏览器 fetch 不需要 CORS 白名单,web 壳换端口零影响
 - **复用壳鉴权**:`connection.requestRejection` 一行挡住未授权请求(sidecar 方案默认无鉴权,是真实隐患)
 - **无端口分配问题**:多工作台并存只靠各自路由前缀(/wb-api、/<前缀>-api…)区分
+- **4xx 的正路**:校验失败、找不到资源 → `throw new HttpError(400, '原因')`(`service/http.mjs`,return 它也行),
+  分发器按给定状态码回应 `{ error, code }`,不当成故障记日志;请求体不是合法 JSON 直接回 400;
+  非 GET/HEAD 的请求体都会被解析成参数(与查询参数合并)
 - 仍要注意:prefix 路由的 handler 是裸 Node req/res,POST body 要自己读;SQLite 用 `node:sqlite`(Node 24 内置);
   造数失败删库重试;确定性 PRNG;`service/` 保持零依赖可独立测试
 
@@ -255,7 +258,7 @@ export function apply(ctx) {
 }
 ```
 
-**`defineTool` 的参数契约**(源码 `dsh-tools/lib/index.js` 的 `parameterSchemaSpecToJsonSchema`):
+**`defineTool` 的参数契约**(逐条对照运行时 `@deepseek-ai/dsh-tools` 0.2.2-rc.5 的 `lib/index.js`):
 
 | 字段 | 契约 |
 |---|---|
@@ -263,6 +266,9 @@ export function apply(ctx) {
 | `required` | 只有 `true` 合法;可选参数**整个省略**该字段 |
 | 失败形态 | 以上任一写错都是 `JsonSchemaError`,且是**整插件级**:fiberPhase 变 failed,同批注册的工具与投影一起消失——工具"不见了"先查插件管理器的 diagnostic |
 | 绕过 | 确需完整 JSON Schema(含 `additionalProperties` 等)时不用 defineTool,直接 `ctx.tools.register({ … })`(实战 session-inspector 形态) |
+| 参数里可写的键(按 `type`) | 标量 `string / number / integer / boolean / null`:`enum`(非空的标量数组)、`const`;`object`:`properties` + **`additionalProperties`(必须显式写 true 或 false)**;`array`:`items`(里面不能再写 `required`);`json`:原样值;联合类型用 `oneOf`。各类型通用:注解键(`description`、`title` 等)与 `required` |
+| 多写的键 | 报 `… is not supported by the value schema DSL`——同样是整插件级失败 |
+| `defineTool` 的其它选项 | 框架在你的 `execute(args, exec)` 之前先按 schema 校验参数(不合法抛 `ToolArgsError`,进不了你的 execute);`isConcurrencySafe(args)` 返回 true 表示该调用可与其他工具并行;`timeoutMs` 须为正的有限数 |
 
 - `inject = ['tools']` 让框架等工具注册表就绪
 - 工具 `execute` 直接调用 service 层查询函数——**agent 与 BI 页面同一数据源**,零重复
@@ -297,6 +303,11 @@ export function apply(ctx) {
 | 20 | 函数插件漏 `export const inject = [...]` → `cannot get property "sessionProjections" without inject`;**import 成功、插件启动后才炸**(运行到那一行才抛) | 消费哪个 face 就在 `inject` 里声明哪个(`['slots','locale','sessionProjections','tools']`);错误文案本身会教你缺什么。类插件用 `static inject = [...]`(实战出处:dsh-plugin-field-notes.md 错误 2) |
 | 21 | `defineTool` 的 `parameters` 传 JSON Schema 全对象(`{type:'object',…}`)→ `JsonSchemaError: parameters.type must be a value schema object`,**整个 Host entry 激活失败、已注册的面(投影等)一并回滚**——症状是"客户端活着、Host 全死、怎么聊都没数据" | npm 版 defineTool 的 `parameters` 是**逐属性映射 spec**(`{参数名:{type,description}}`,parameterSchemaSpecToJsonSchema 编译);无参工具写 `parameters: {}`;确需完整 JSON Schema 就绕过 defineTool 直接 `ctx.tools.register`(实战 session-inspector 形态)。guard 有毒形态检查。**定位与恢复**(2026-11-23 真机实测):插件管理器看 `fiberPhase: failed` + `diagnostic` 原文定位;爆炸半径=整插件(同文件其余工具一起消失);改对代码后经插件管理器 disable→enable 重激(fiberPhase failed → active,新代码生效、无需重启进程——0.2.2-rc.5 真机验证)。**别把新版口径当成旧版文档的话**:rc.5 的 host-plugin.md 写「替换已安装包需重启才能加载新模块」,0.2.3-alpha.1 才改为「文件变更在下一次 profile 重组时被拾取」(见 §12 台账)。**`./start.sh` 现在自带激活判定**:启动即失败时直接报 ✗ 并非零退出,不再谎报成功 |
 | 22 | **Host 半区用了没 import 的标识符**(`ReferenceError: readFileSync is not defined`,出自 `service/db.mjs:10`)——`node --check` 只查语法所以过了门禁;到激活时才炸,且整个 Host entry 一起失败(数据服务/工具/投影全没)。坑 #15 的 Host 侧变体 | guard 用 tsc 的 checkJs 查 `index.js` 与 `service/`(`tsconfig.host.json`),只拦「找不到名字 / 导入的成员不存在 / 相对路径写错」这几类激活必炸的诊断;裸包名解析不到不拦(运行时包由宿主提供)。实测能逮四种:未导入的标识符、`node:fs` 里不存在的导出、相对路径拼错、本地模块里拼错的成员名(2026-11-25,由一次真实实验的激活失败日志发现)|
+| 23 | **数据目录靠环境变量定位 profile,实际没落到 profile 里**:手册写「数据落 `<profile根>/data/<包名>/`」,实现读的是 `$DSH_PROFILE_DIR`——但这个变量只在宿主发起的 shell 调用里设置,**Host 进程自己的环境里没有**,于是数据一直落在回退位置 `~/.dsh/data/<包名>/`:不随 profile 存活,同名包跨 profile 共用一个库(2026-11-25 实战发现;探针实测 Host 进程的 DSH_* 变量只有 `DSH_USER_AGENT_SUFFIX`) | profile 根取宿主根上下文的 `ctx.baseUrl`(`file://…/profiles/<名>/`),由 `index.js` 的 apply() 经 `configureDataDir({ baseUrl })` 交给数据层;`WB_DATA_DIR` 仍可显式覆盖。基线自带 `MIGRATIONS` 数组 + `PRAGMA user_version`;旧位置的库在新位置没有库时复制一份过去(旧位置保留) |
+| 24 | **`src/styles.ts` 悄悄盖掉主题**:它是 theme.ts 之前的老文件,把基线 token 和几个组件类又定义了一遍,且在注入顺序里排在主题之后——卡片 / 表格 / 空态的内边距实际以它为准,`theme.ts` 成了摆设,设计系统有两个事实来源 | `src/styles.ts` 只放页面级公共片段,**不重定义 token、不覆盖 theme.ts 的组件类**;页面私有样式写在页面文件导出的 CSS 常量里,由 client.tsx 一并注入 |
+| 25 | **运行时切换设计语言只换得了颜色**:变体包定义了圆角、数字字体、序号颜色、焦点环等 token,`theme.ts` 里却全是写死的值(卡片 14px、衬线 Georgia…),变体覆盖全是空转——契约文档明明写着终端风是 8px 圆角 | 凡变体会改的取值一律 `var(--wb-*)`,基线块补齐这些 token 的默认值;guard 增「设计语言完整性」检查(变体 token 必须有基线定义且被主题消费,页面直取型除外) |
+| 26 | **请求层把一切失败折成 null,分发器只会回 200 或 500**:手册要求页面区分「无权限」与「错误」两种状态,可前端拿不到状态码;业务校验失败只能回 500 或自己改分发器(实战中开发 AI 确实自己改了) | `src/api.ts`:`get / post / put / patch / del / postStream`,失败抛 `ApiError`(`.status`:401/403 = 无权限,0 = 不可达);`service/http.mjs` 的 `HttpError` 让路由按 4xx 回应;请求体不是合法 JSON 回 400 |
+| 27 | **侧栏品牌位在 0.2.2-rc.5 的默认 web 组合下不显示**:骨架往 `sidebar.brand.mark/name` 注册了品牌,机制清单标着已实证,实战中改了 `brand.tsx` 却看不到——默认组合装载了官方品牌包 `ui-brand-official`,它占着这两个插槽(其 README:自带身份的部署应不装载本包、另组一个包来占位) | 标为 ⛔:替换品牌是 profile 级的组合决定,不是插件里改几行能解决的;向用户如实说明,不要承诺「改 brand.tsx 就能换品牌」 |
 
 ---
 
@@ -320,6 +331,8 @@ export function apply(ctx) {
 10. **诚实边界**(官方 plugin-development.md:"installation and slot registration alone do not
     establish what the user sees"):注册成功 ≠ 用户看得见。introspection 能证明"注册成功+数值正确",
     "用户真的看到"必须浏览器实测——报告验证结论时把这两层分开说(field-notes §6)
+11. **自动化断言前的两个准备**:全新 profile 首次打开会弹「预览版说明」遮罩,先关掉再断言;
+    `./start.sh` 被工具或代理调用时(标准输出不是终端)不再弹浏览器窗口,地址在输出里
 
 ---
 
@@ -386,7 +399,12 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 **AI 开发动线**:首次提示词(结果页可复制)→ AI 读 AGENTS.md / EXAMPLES.md → 按 9 页范式实现业务 →
 每次改动 npm run guard && npm run build 全绿 → 交付说明。
 实战记录:固件化**之前**的旧代际两次(dsh-test、dsh-test-2)从生成到页面交付 13~23 分钟,红线全守;
-新代际(零面板固件 + vendored 图标 + 会话联动固件)的完整开发实战尚待进行——这是当前最大的未验证项。
+**新代际实战**(2026-11-25,基线 `57c35a6`):派一个没有任何上下文的子代理当开发 AI——只给它骨架 README 里的
+首次提示词与一份小需求(待办清单:列表 / 表单 / 持久化 / 带可选参数的只读工具)。合规核对 33/34,唯一不符的一项是
+骨架自身的缺陷(根目录缺 `DESIGN.md`);红线与默认策略全部守住,它还照手册自己实现了 `user_version` 迁移。
+但它读完手册与源码后报出十几处「手册与实际不符」,逐条核实全部属实并已回填(坑 #23–#27、§11 各行、§6.1 / §6.2)。
+成本:合计约 4486 万 token、84 分钟(入职 184 万 / 11 分钟,开发与验证约 4300 万 / 73 分钟)——入职要求读完 9 个
+示例页源码,是其中最大的一块。未覆盖:agent 工具的模型端到端调用(要在真实会话里发消息,没做)。
 
 ## 11. 机制验证清单(dsh 能力 × 实证状态)
 
@@ -398,7 +416,7 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 | client 闭包工厂 bundle(esbuild 单文件) | ✅ | `build.mjs` | 运行时外部依赖只有 react/jsx-runtime(种子表 §4) |
 | 主面板 `main`(keyed) | ✅ | `src/client.tsx` | key=面板 id;`inject` 可向组件传 navigate 等回调 |
 | 侧边栏入口 `sidebar.panellist` | ✅ | `src/client.tsx` | order 负数可排在官方「插件」前;自动进「更多」菜单 |
-| 品牌替换 `sidebar.brand.mark/name` | ✅ | `src/brand.tsx` | 文字用 currentColor 适配深浅主题 |
+| 品牌替换 `sidebar.brand.mark/name` | ⛔(0.2.2-rc.5 默认组合下不显示) | `src/brand.tsx`(注册了但不生效) | 默认 web 组合装载官方品牌包 `ui-brand-official`,占着这两个插槽;替换要在组合层面不装载它(profile 级决定)。坑 #27 |
 | 面板跳转 `layout.selectPanel` | ✅ | 经营分析落地页 | `'conversation'` 保留键可跳聊天 |
 | 会话注入提示词 | ⛔ | — | 无公开 API(提交权归用户);用"复制提示词+跳转会话"替代(#12) |
 | agent 工具 `defineTool` | ✅ | `index.js` | 可选参数省略 required;描述写数据范围与披露要求 |
@@ -409,11 +427,15 @@ npx @deepseek-ai/dsh --profile <id> --no-open --port 3123
 | client.js rev/HMR | ✅ | — | client 改动刷新即生效;Host 改动需重启 |
 | npm pack 分发 | ✅ | prepack 钩子 | 装入全新 profile 实测通过 |
 | **ctx.llm Host 直调模型** | ✅ | `service/ai.mjs` | `ctx.get('agentDefaultModel').currentSelection()` 取选型 → `llm.prepareCall(...).stream()` 流式;不可用时显式降级(借鉴 dsh-media-desk);已用于「AI 解读」页 |
-| **SSE 流式到页面**(逐字输出) | ✅ | `index.js` `/ai-read-stream` + `src/api.ts` `fetchAiReadStream` | 路由自写响应(dispatch 返回 undefined 不包 JSON)→ `text/event-stream` 逐段转发 streamChat 增量;页面 ReadableStream 解析 `data:` 帧 |
+| **SSE 流式到页面**(逐字输出) | ✅ | `index.js` `/ai-stream` + `src/api.ts` `postStream` | 路由自写响应(dispatch 返回 undefined 不包 JSON)→ `text/event-stream` 逐段转发 streamChat 增量;页面 ReadableStream 解析 `data:` 帧 |
+| **同源请求层** | ✅(2026-11-25 补齐) | `skeleton/src/api.ts` + `service/http.mjs` | get / post / put / patch / del / postStream;失败抛 `ApiError`(`.status`:401/403 = 无权限,0 = 不可达),四态靠它区分;路由 `throw new HttpError(400, '…')` 按 4xx 回应;请求体非法 JSON 回 400(坑 #26) |
+| **设计语言运行时切换** | ✅(2026-11-25 修正) | `src/design/variants.ts` + `src/design/switcher.tsx` + `theme.ts` | `html[data-wb-variant]` 作用域覆盖 token;`theme.ts` 里可变取值全部走 `var(--wb-*)`,guard 的「设计语言完整性」检查把关(曾因写死取值而只换得了颜色,坑 #25) |
+| 宿主 `storage` 服务 | 🔶 存在但无公开文档 | — | `ctx.get('storage')` 可取到(带 backend / forms;2026-11-25 探针实测)。官方只说「经 inspection 找 storage service」,接口未文档化;骨架继续自持 SQLite,待其公开后再评估 |
+| 宿主焦点环模态 | ✅(实战观察,未对源码核实) | — | 最近一次输入是鼠标时,壳会把非输入类元素的焦点环置成透明,且权重高于插件样式;键盘可达的自绘控件要自己给 `:focus-visible` 焦点环(`theme.ts` 的 wb-btn / wb-chip / wb-input 等已带) |
 | **官方图标系统**(vendored + sprite) | ✅ | `skeleton/src/design/icons-data.ts` + theme.ts mountIconSprite + `WbIcon` | 官方图形**vendored 进包**(`npm run vendor-icons` 提取,106 glyph × 2 权重);symbol id = `<前缀>-icon-<glyph>-<weight>`(随项目前缀改名),sprite 挂载按包名命名空间化(坑 #16)防共存互拆;插件不得 import Harness Client 包(practices.md) |
 | **skeleton 唯一源**(镜像机制已退役) | ✅ | — | 根仓 src/ 是生成器自己的 ScaffoldPage 应用,**不消费** theme/examples——无同步无比对(旧 `sync-shared.mjs` 方向描述失实、pairs 含已删文件、真跑必崩,2026-11-22 退役);防漂移靠唯一源纪律:改 skeleton 即改源。主代码 import 示例区直接 fail(guard 边界) |
 | **tsc 静态引用检查**(guard 内置) | ✅ | `tsconfig.json`(src,lenient)+ `tsconfig.host.json`(Host 半区,checkJs) | esbuild 不查标识符引用(坑 #15);`node --check` 也只查语法(坑 #22)。src 侧全量类型检查;Host 侧只拦「找不到名字 / 导入成员不存在 / 相对路径写错」;骨架零 client 包运行时依赖后,自维护类型面(vendor.d.ts)已随之退役 |
-| **插件数据目录**(升级不丢数据) | ✅ | `skeleton/service/db.mjs` | 数据落 `<profile根>/data/<包名>/`(向上找 dsh.profile 标记推导)——GitHub/npm 安装的包目录在 update 时会被整体替换,数据放包内=升级即清空;link 安装回退包内。表结构演进用 PRAGMA user_version + 迁移步骤,勿裸改 CREATE TABLE |
+| **插件数据目录**(升级不丢数据) | ✅(2026-11-25 修正并真机验证) | `skeleton/service/db.mjs` + `index.js` apply() | 数据落 `<profile 根>/data/<包名>/`;profile 根取自 `ctx.baseUrl`(**不是**环境变量——Host 进程里没有 `DSH_PROFILE_DIR`,坑 #23)。`WB_DATA_DIR` 可显式覆盖(测试用);无 profile 时回退 `~/.dsh/data/<包名>/`。表结构演进:往 `MIGRATIONS` 末尾追加 + `PRAGMA user_version`;迁移失败回滚且不删库;演示数据造数失败只回滚、下次重试(不删库——库里可能有业务数据)。旧位置的库在新位置没有库时复制过去 |
 | **session projection**(会话派生状态) | ✅(骨架固件;真机探针数值与会话规模一致 ✓ 2026-11-23;fork 场景由实战 session-inspector 双向实证) | `skeleton/service/session-stats.mjs` + 官方 action-cards | Host 半区 `ctx.sessionProjections.register({key,stateVersion,stateSchema,init,apply,wire})`;`apply` 纯+同步,不关心的事件返回同一引用;`state` 必须 plain JSON;**fork 守卫必须加**:`init` 存下 `inheritedEventCount`,`apply` 首行 `if (event.seq < state.inheritedEventCount) return state`(否则 fork 会话把父历史算成自己的,静默偏大不报错);改折叠语义必须 bump `stateVersion`;客户端 `useProjection(key)` 读成品值不折叠事件;`stateSchema`/`viewSchema` 必须是真 zod(擦除契约只要 `parse()`,但手搓假 schema 在冷读/导出路径炸);key 从未发布时 `useProjection` 读到 `undefined`——是值不是错误,组件可先订阅后等值;⚠️ `main` 插槽的 `standardProps` **没有** `useProjection`(只有 `sidebar.right.pane.tab` 等有,cordis_inspect 实测) |
 | **右侧栏 tab 类型**(`sidebarRightTabs`) | ✅(骨架示例 + 工具箱双实证) | `skeleton/src/examples/SessionLinkageTab.tsx` | `ctx.sidebarRightTabs.register({id,kind,title,guide})` 注册**类型**,再往 `sidebar.right.pane.tab` / `.title` 两个 keyed 槽注册 body/title(key = type 的 id);⚠️ **`guide` 省略 = 不上 guide 页 = 界面打不开**(官方源码注 "Omit to stay off it",注册仍报 success) |
 | **探针工具**(自检模式) | ✅ 建议采用 | 本仓 `wbt_scaffold` / `wbt_uninstall` | 给插件注册一个"读内部状态"的工具,让 agent 直接断言数值而非肉眼看 UI——能抓出静默 bug(数值看着合理但偏大);见 §8 第 9 条 |

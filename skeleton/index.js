@@ -9,7 +9,8 @@
  * 改名点:路由前缀 wb-api / 工具名 wb_* / cordis.patch.yml 的 id 与包名。
  */
 import { regionSummary, latest } from './service/api.mjs'
-import { getDb } from './service/db.mjs'
+import { configureDataDir, getDb } from './service/db.mjs'
+import { HttpError } from './service/http.mjs'
 import { streamChat } from './service/ai.mjs'
 import { registerSessionStats, sessionStatsProbe, SESSION_STATS_KEY } from './service/session-stats.mjs'
 import Schema from '@deepseek-ai/schemastery'
@@ -29,6 +30,9 @@ try { ({ defineTool } = await import('@deepseek-ai/dsh-tools')) } catch { /* sta
 
 const PREFIX = '/wb-api'
 
+/** 路由返回或抛出的 HttpError 对应的状态码(只认 400–599 的整数);不是 HttpError 则为 null。 */
+const httpStatusOf = (x) => (x instanceof HttpError && Number.isInteger(x.httpStatus) && x.httpStatus >= 400 && x.httpStatus <= 599 ? x.httpStatus : null)
+
 
 /** dsh 插件入口。 */
 // 坑 #20:消费哪个 face 就必须在这里声明哪个——漏了会在运行到那一行时才抛
@@ -36,7 +40,9 @@ const PREFIX = '/wb-api'
 export const inject = ['tools', 'webServer', 'connection', 'sessionProjections']
 
 export async function apply(ctx, config) {
-  getDb() // 首启自动建库造数
+  // 数据落在 <profile 根>/data/<包名>/:profile 根取自 ctx.baseUrl(Host 进程的环境里没有 DSH_PROFILE_DIR)
+  configureDataDir({ baseUrl: ctx.baseUrl })
+  getDb() // 建库 / 迁移 / 首启造数
 
 const routes = {
   'GET /health': () => ({ ok: true, service: 'myworkbench-data', time: new Date().toISOString() }),
@@ -70,38 +76,43 @@ const routes = {
     kind: 'prefix',
     path: PREFIX,
     handler: async (req, res) => {
+      const respond = (status, body) => {
+        if (res.headersSent) { res.end(); return }
+        res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' })
+        res.end(JSON.stringify(body))
+      }
       try {
         const connection = ctx.get('connection')
         const rejection = typeof connection?.requestRejection === 'function'
           ? connection.requestRejection({ headers: req.headers })
           : 403
-        if (rejection) {
-          res.writeHead(rejection, { 'content-type': 'application/json; charset=utf-8' })
-          res.end(JSON.stringify({ error: '未授权' }))
-          return
-        }
+        if (rejection) { respond(rejection, { error: '未授权' }); return }
         const url = new URL(req.url, 'http://local')
         const path = url.pathname.startsWith(PREFIX) ? url.pathname.slice(PREFIX.length) : url.pathname
         const fn = routes[`${req.method} ${path}`]
-        if (fn === undefined) {
-          res.writeHead(404, { 'content-type': 'application/json; charset=utf-8' })
-          res.end(JSON.stringify({ error: 'no route' }))
-          return
-        }
+        if (fn === undefined) { respond(404, { error: 'no route' }); return }
         const params = { ...Object.fromEntries(url.searchParams) }
-        if (req.method === 'POST') {
+        if (req.method !== 'GET' && req.method !== 'HEAD') {
           let raw = ''
           for await (const c of req) raw += c
-          if (raw !== '') { try { Object.assign(params, JSON.parse(raw)) } catch { /* ignore */ } }
+          if (raw !== '') {
+            try { Object.assign(params, JSON.parse(raw)) } catch { throw new HttpError(400, '请求体不是合法的 JSON') }
+          }
         }
         const out = await fn(params, res)
         if (out === undefined) return // SSE 等自写响应的路由,已经 end()
-        res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
-        res.end(JSON.stringify(out))
+        const status = httpStatusOf(out)
+        if (status !== null) { respond(status, { error: out.message, code: out.code }); return } // 业务校验失败等
+        respond(200, out)
       } catch (error) {
+        const status = httpStatusOf(error)
+        if (status !== null) { // 路由抛出的 HttpError:按它给的状态码回应,不当成故障
+          if (status >= 500) console.error('[wb-data]', error)
+          respond(status, { error: error.message, code: error.code })
+          return
+        }
         console.error('[wb-data]', error)
-        if (!res.headersSent) res.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
-        res.end(JSON.stringify({ error: String(error?.message ?? error) }))
+        respond(500, { error: String(error?.message ?? error) })
       }
     },
   }), 'myworkbench: /wb-api routes')

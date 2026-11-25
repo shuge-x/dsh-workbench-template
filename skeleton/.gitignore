@@ -3,3 +3,4 @@ service/data/
 *.log
 .DS_Store
 *.tgz
+client.js

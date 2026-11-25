@@ -7,6 +7,8 @@
  *    不得 require/load Harness Client 包(practices.md),故素材进包、不进依赖;
  *    sprite 由 mountIconSprite 统一挂载,符号前缀 wb-icon- 防与宿主撞 id
  *  - 客户端样式改动零散无效时,先检查是不是忘了根容器 wb-page(坑 #14)
+ *  - 凡是设计变体会改的取值(颜色、圆角、数字/序号字体、行悬停、焦点环)一律走 var(--wb-*),不写死——
+ *    写死的值运行时切换设计语言时不会变(guard 有 token 完整性检查)
  *
  * 改名点:CSS 前缀 wb- → 你的前缀(含 sprite 前缀 wb-icon-)。
  */
@@ -30,6 +32,15 @@ export const THEME_CSS = String.raw`
   --wb-warn: #b7790a;
   --wb-err: #c0392b;
   --wb-idle: #9aa294;
+  /* 以下 token 由设计变体包(src/design/variants.ts)覆盖:基线必须有定义,页面才能放心用 */
+  --wb-card-2: #f3f1ea;
+  --wb-radius-card: 14px;
+  --wb-radius-btn: 10px;
+  --wb-font-num: Georgia, 'Times New Roman', serif;
+  --wb-sec-font: Georgia, 'Times New Roman', serif;
+  --wb-sec-color: #b7790a;
+  --wb-focus-ring: 0 0 0 3px rgba(79,110,240,.25);
+  --wb-row-hover: rgba(0,0,0,.025);
   height: 100%;
   overflow-y: auto;
   background: var(--wb-bg);
@@ -51,19 +62,19 @@ export const THEME_CSS = String.raw`
 
 /* ---- 区块标题:衬线序号 + 标题 ---- */
 .wb-sec { display: flex; align-items: baseline; gap: 10px; margin: 22px 0 12px; }
-.wb-sec-no { font-family: Georgia, 'Times New Roman', serif; font-size: 17px; color: var(--wb-warn); }
+.wb-sec-no { font-family: var(--wb-sec-font); font-size: 17px; color: var(--wb-sec-color); }
 .wb-sec-title { font-size: 15px; font-weight: 650; }
 
 /* ---- 卡片与网格 ---- */
-.wb-card { background: var(--wb-card); border: 1px solid var(--wb-line); border-radius: 14px; padding: 16px 18px; }
+.wb-card { background: var(--wb-card); border: 1px solid var(--wb-line); border-radius: var(--wb-radius-card); padding: 16px 18px; }
 .wb-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .wb-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .wb-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 
 /* ---- KPI:大数字 + 环比 ---- */
 .wb-kpi .l { font-size: 12px; color: var(--wb-ink2); }
-.wb-kpi .v { font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: 600; margin: 4px 0 2px; }
-.wb-num { font-family: Georgia, 'Times New Roman', serif; font-variant-numeric: tabular-nums; }
+.wb-kpi .v { font-family: var(--wb-font-num); font-size: 24px; font-weight: 600; margin: 4px 0 2px; }
+.wb-num { font-family: var(--wb-font-num); font-variant-numeric: tabular-nums; }
 .wb-up { color: var(--wb-ok); font-size: 12px; }
 .wb-down { color: var(--wb-err); font-size: 12px; }
 
@@ -71,13 +82,14 @@ export const THEME_CSS = String.raw`
 .wb-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; border: 1px solid var(--wb-line); border-radius: 999px; padding: 2px 10px; color: var(--wb-ink2); background: var(--wb-card); }
 .wb-chip.on { border-color: var(--wb-ink); color: var(--wb-ink); font-weight: 550; }
 .wb-pill { display: inline-flex; align-items: center; font-size: 11.5px; border-radius: 999px; padding: 2px 9px; }
-.wb-pill.ok { color: var(--wb-ok); background: rgba(46,125,79,.12); }
-.wb-pill.warn { color: var(--wb-warn); background: rgba(183,121,31,.13); }
-.wb-pill.err { color: var(--wb-err); background: rgba(192,57,43,.12); }
-.wb-pill.info { color: var(--wb-accent); background: rgba(79,110,240,.11); }
+/* 徽章底色由语义色派生:变体换了语义色,底色自动跟随(原先写死的 rgba 里,warn 那个还是取值抄错的残留) */
+.wb-pill.ok { color: var(--wb-ok); background: color-mix(in srgb, var(--wb-ok) 12%, transparent); }
+.wb-pill.warn { color: var(--wb-warn); background: color-mix(in srgb, var(--wb-warn) 13%, transparent); }
+.wb-pill.err { color: var(--wb-err); background: color-mix(in srgb, var(--wb-err) 12%, transparent); }
+.wb-pill.info { color: var(--wb-accent); background: color-mix(in srgb, var(--wb-accent) 11%, transparent); }
 
 /* ---- 按钮:三态齐全(悬停/选中/禁用) ---- */
-.wb-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; border-radius: 10px; padding: 7px 16px; transition: opacity .15s ease; }
+.wb-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; border-radius: var(--wb-radius-btn); padding: 7px 16px; transition: opacity .15s ease; }
 .wb-btn.primary { background: var(--wb-ink); color: var(--wb-bg); }
 .wb-btn.primary:hover { opacity: .85; }
 .wb-btn.ghost { border: 1px solid var(--wb-line); color: var(--wb-ink); }
@@ -97,7 +109,7 @@ export const THEME_CSS = String.raw`
 .wb-table { width: 100%; border-collapse: collapse; }
 .wb-table th { text-align: left; font-size: 12px; color: var(--wb-ink2); padding: 8px 12px; border-bottom: 1px solid var(--wb-line); }
 .wb-table td { padding: 9px 12px; border-bottom: 1px solid var(--wb-line); }
-.wb-table tr:hover td { background: rgba(0,0,0,.025); }
+.wb-table tr:hover td { background: var(--wb-row-hover); }
 
 /* ---- 页签 ---- */
 .wb-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--wb-line); padding: 0 28px; }
@@ -117,6 +129,9 @@ export const THEME_CSS = String.raw`
 .wb-field label { font-size: 12px; color: var(--wb-ink2); }
 .wb-input, .wb-select { font: inherit; color: var(--wb-ink); background: var(--wb-card); border: 1px solid var(--wb-line); border-radius: 9px; padding: 7px 12px; outline: none; }
 .wb-input:focus, .wb-select:focus { border-color: var(--wb-accent); }
+/* 键盘焦点环:只在 :focus-visible 时出现(鼠标操作不显示)。壳在「最近一次输入是鼠标」时会把非输入类元素的
+   焦点环置成透明且权重更高,所以键盘可达的自绘控件要自己给出焦点环 */
+.wb-btn:focus-visible, .wb-chip:focus-visible, .wb-tab:focus-visible, .wb-input:focus-visible, .wb-select:focus-visible { outline: none; box-shadow: var(--wb-focus-ring); }
 
 /* ---- 键值对 ---- */
 .wb-kv { display: grid; grid-template-columns: max-content 1fr; gap: 7px 18px; font-size: 12.5px; }

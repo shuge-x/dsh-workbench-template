@@ -64,7 +64,11 @@ while [ -z "$TOKEN" ] && [ "$N" -lt 60 ]; do
 done
 if [ -n "$TOKEN" ]; then
   echo "[start] ✓ 实例已启动: http://127.0.0.1:$PORT/?$TOKEN"
-  open "http://127.0.0.1:$PORT/?$TOKEN" 2>/dev/null || true
+  # 只有人在终端里运行时才打开浏览器;被工具或 AI 代理调用时标准输出不是终端,不弹窗口
+  # (地址已经在上面打印了)。无论如何都想开:START_OPEN=1 ./start.sh
+  if [ -t 1 ] || [ "${START_OPEN:-}" = "1" ]; then
+    open "http://127.0.0.1:$PORT/?$TOKEN" 2>/dev/null || true
+  fi
   # 激活判定(坑 #21):拿到地址 ≠ 插件活着。Host 半区激活失败时这里报 ✗ 并以非零退出
   sh scripts/activation-verdict.sh "$LOG" 10
 else

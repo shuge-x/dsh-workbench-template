@@ -28,6 +28,7 @@ html[data-wb-variant="terminal"] .wb-page {
   --wb-bg: #0d1117;
   --wb-card: #161b22;
   --wb-card-2: #21262d;
+  --wb-row-hover: var(--wb-card-2);
   --wb-line: #30363d;
   --wb-ink: #e6edf3;
   --wb-ink2: #8b949e;
@@ -56,6 +57,7 @@ html[data-wb-variant="paper"] .wb-page {
   --wb-bg: #faf7f2;
   --wb-card: #fffdf8;
   --wb-card-2: #f3efe4;
+  --wb-row-hover: var(--wb-card-2);
   --wb-line: #e8e2d6;
   --wb-ink: #2b2b26;
   --wb-ink2: #6b6a5f;
@@ -86,6 +88,7 @@ html[data-wb-variant="drafito"] .wb-page {
   --wb-bg: #ffffff;
   --wb-card: #ffffff;
   --wb-card-2: #f0f3f1;
+  --wb-row-hover: var(--wb-card-2);
   --wb-line: #e6eae7;
   --wb-ink: #1d2824;
   --wb-ink2: #59645e;
