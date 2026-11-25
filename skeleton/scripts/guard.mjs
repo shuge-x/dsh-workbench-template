@@ -24,6 +24,11 @@ const fail = (msg) => { console.error(`[guard] ✗ ${msg}`); failures += 1 }
 const ok = (msg) => console.log(`[guard] ✓ ${msg}`)
 const warn = (msg) => console.warn(`[guard] ⚠ ${msg}(不阻断,但建议修)`)
 
+// 依赖未安装时,后面的 tsc / Host 半区引用检查 / 渲染冒烟只能跳过——跳过得来的「通过」不算数,直接拦下并说明原因
+if (!existsSync('node_modules')) {
+  fail('依赖未安装:先 npm install(tsc、Host 半区引用检查、渲染冒烟都靠它;没有它们时的「通过」不算数)')
+}
+
 // 坑 #1 + 坑 #21
 const hostFiles = ['index.js', ...walkFiles('service').filter(f => /\.(m?js|ts)$/.test(f))] // 只读源码:service 下可能混有数据文件
 for (const f of hostFiles) {
@@ -111,6 +116,10 @@ if (existsSync('src')) {
       warn(`dependencies 非空(${deps.join(' ')}):link 安装时 Node 按插件真实路径找 node_modules,`
         + '没跑过 npm install 的目录会激活失败(坑 #17);运行时能力交给宿主 external 或 peer + start.sh 安装')
     }
+    // 展示身份仍是模板占位(提醒,不阻断):交付前应换成业务身份——AGENTS.md 工作流第 7 步
+    if (String(pkg.description ?? '').includes('骨架,复制后全局改名')) {
+      warn('package.json 的 description 还是模板占位文案——交付前换成业务描述(AGENTS.md 工作流第 7 步)')
+    }
     if (failures === 0) ok('展示元数据齐全(locale meta + icon + files/exports 闭包)')
   }
 }
@@ -168,7 +177,7 @@ if (existsSync(tscBin)) {
     if (lines.length === 0) fail('tsc --noEmit 失败(手动跑 tsc --noEmit 看详情)')
   }
 } else {
-  ok('跳过 tsc 静态检查(未安装 typescript,装上后自动启用)')
+  fail('typescript 未安装,tsc 静态引用检查被跳过(坑 #15):npm install 后重跑')
 }
 
 // 坑 #22 Host 半区未定义标识符:node --check 只查语法。「用了没 import 的标识符」「import 了不存在的
@@ -184,18 +193,19 @@ if (existsSync(tscBin) && existsSync(hostTsconfig)) {
     out = String(e.stdout ?? '') + String(e.stderr ?? '')
   }
   if (/TS2688: Cannot find type definition file for 'node'/.test(out)) {
-    ok('跳过 Host 半区引用检查(未安装 @types/node,装上后自动启用)')
+    fail('@types/node 未安装,Host 半区引用检查被跳过(坑 #22):npm install 后重跑')
   } else {
     const bad = out.split('\n').filter((l) => /error TS(2304|2552|2305|2614|2724):/.test(l) || /TS2307: Cannot find module '\.{1,2}\//.test(l))
     for (const l of bad.slice(0, 8)) fail('Host 半区引用错误(坑 #22,激活时会炸): ' + l.trim())
     if (bad.length === 0) ok('Host 半区引用检查通过(未定义标识符 / 不存在的导出 / 相对路径)')
   }
 } else if (!existsSync(hostTsconfig)) {
-  ok('跳过 Host 半区引用检查(缺 tsconfig.host.json)')
+  fail('缺 tsconfig.host.json,Host 半区引用检查被跳过(坑 #22):从骨架恢复该文件')
 }
 
 // 渲染冒烟:逐页面组件 renderToString(坑 #15 的运行时形态,渲染即崩)
-try {
+// 依赖未安装时冒烟脚本连 esbuild 都 import 不到;原因已在开头说明,这里不再叠一条「运行失败」
+if (existsSync('node_modules')) try {
   const out = execSync(`node ${JSON.stringify(join('scripts', 'smoke-render.mjs'))}`, { stdio: 'pipe', cwd: process.cwd() }).toString()
   const pass = out.split('\n').filter((l) => l.includes('✓')).length
   ok('渲染冒烟通过(' + pass + ' 个组件)')

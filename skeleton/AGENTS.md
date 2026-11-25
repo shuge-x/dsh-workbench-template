@@ -94,15 +94,21 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 
 ## 开发工作流(加一个页面的标准路径)
 
+0. 全新项目先 `npm install`——没装依赖时 guard 会直接拦下(tsc、Host 半区引用检查、渲染冒烟都靠它)
 1. 读 `docs/EXAMPLES.md` 红线映射表,按意图挑示例页(总览/列表/详情/图表/表单/四态/图标)
 2. 新建 `src/pages/XxxPage.tsx`,范式照对应示例页抄,内容换成业务。**第一个业务页面的顶栏右侧放
    `<DesignSwitcher />`**(from `./design/switcher`)——用户靠它即时切换设计语言;固件不预置页面,
-   你不挂载,用户就看不到切换器
+   你不挂载,用户就看不到切换器。页面组件以 `Page` 结尾,且**不传 props 也要能渲染**(渲染冒烟会逐个
+   renderToString):渲染期不要直接读 `window` / `localStorage`,要读就包 try/catch(切换器组件即此写法)
 3. 在 `src/client.tsx` 的 `PANELS` 数组注册(id + 标题 + 图标 + page)
 4. 要真数据:`service/api.mjs` 加查询函数 → `index.js` 的 `routes` 加路由 → `src/api.ts` 加 fetch → 页面调用
 5. 每个取数页面**四态备齐**:加载(骨架屏)/ 空态(给下一步动作)/ 错误(带重试)/ 无权限(明确提示)
 6. 完成门禁:`npm run guard && npm run build` 全绿才算完成
-7. 交付前验证清单(对齐官方 docs/official/dsh-doc/references/verification.md,硬项不是可选项):
+7. **交付前把展示身份换成业务的**(官方 host-plugin.md:不留与交付插件无关的模板文案):`locale/zh.json` 与
+   `locale/en.json` 的 `meta.title` / `meta.description`(Plugins 页的标题与描述)、`src/brand.tsx` 的侧栏
+   品牌名、`package.json` 的 `description`;`icon.svg` 按需重画(官方 artwork.md:36×36、字标用路径、不画底板)。
+   名称以用户给的为准,没给就问
+8. 交付前验证清单(对齐官方 docs/official/dsh-doc/references/verification.md,硬项不是可选项):
    - 起实例用 `./start.sh`(自动打印带 token 的地址,不要自己猎 token)。脚本结尾自带**激活判定**:
      `✓ 插件 Host 半区已激活` 才算启动成功;`✗ 激活失败` 时脚本非零退出——**地址能打开不等于插件活着**
      (数据服务/工具/投影可能全部不可用),按它打印的 diagnostic 修完重跑;之后再看日志确认无 slot entry 崩溃
@@ -137,6 +143,7 @@ AI 接手本项目:① 读 `docs/official/dsh-doc/SKILL.md`(官方规范入口;r
 ## 命令
 
 ```bash
+npm install         # 全新项目先装依赖(开发依赖:tsc / esbuild / 类型声明)
 npm run guard        # 门禁:红线/边界/元数据/Harness Client 包禁令/token 纪律/tsc/Host 半区引用/渲染冒烟
 npm run build        # esbuild 打包 client.js
 npm run watch        # 监听构建

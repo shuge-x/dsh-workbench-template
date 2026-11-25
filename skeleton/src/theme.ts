@@ -27,7 +27,7 @@ export const THEME_CSS = String.raw`
   --wb-ink3: #9aa294;
   --wb-accent: #4f6ef0;
   --wb-ok: #2e7d4f;
-  --wb-warn: #b7791f;
+  --wb-warn: #b7790a;
   --wb-err: #c0392b;
   --wb-idle: #9aa294;
   height: 100%;

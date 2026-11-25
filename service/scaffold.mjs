@@ -93,7 +93,7 @@ export async function scaffoldProject({ target, name, id } = {}) {
     ['dsh-myworkbench', n],
     ['myworkbench', i],
   ])
-  replaceIn(join(t, 'src', 'client.tsx'), [['dsh-myworkbench', n], ['my-workbench', i]])
+  replaceIn(join(t, 'src', 'client.tsx'), [['dsh-myworkbench', n], ['my-workbench', i], ['myworkbench', i]])  // effect 标签(myworkbench: …)也随插件 id 改名
   // theme.ts 的 PKG 常量(sprite 命名空间化用)也随包名改
   replaceIn(join(t, 'src', 'theme.ts'), [['dsh-myworkbench', n]])
   // locale/*.json(meta.title/description)文案不含包名,故不参与替换;
